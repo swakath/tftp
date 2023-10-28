@@ -16,7 +16,7 @@
 #define COMM_H
 
 #include <iostream>
-#include <string>
+#include <cstdlib>
 
 #include <cstring>
 #include <cstdio>
@@ -30,6 +30,11 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <thread>
 
+#include <string>
+#include <vector>
 
+#define LOG_BUFF_SIZE 1024
+char log_message[LOG_BUFF_SIZE];
 #endif

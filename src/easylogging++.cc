@@ -1,6 +1,4 @@
 //
-//  Bismillah ar-Rahmaan ar-Raheem
-//
 //  Easylogging++ v9.97.1
 //  Cross-platform logging library for C++ applications
 //
