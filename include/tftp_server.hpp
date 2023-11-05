@@ -1,5 +1,5 @@
 /**
- * @file tftp_server.cpp
+ * @file tftp_server.hpp
  * @brief TFTP Server.
  *
  * This file contains prototypes and constants for TFTP Server side implementation as per RFC 1350
@@ -14,18 +14,34 @@
 #ifndef TFTP_SER
 #define TFTP_SER
 
-#ifndef COMM_H
-    #include "common.hpp"
+#ifndef TFTP_SOCK
+    #include "tftp_socket.hpp"
 #endif
 
-#include "easylogging++.h"
+#ifdef EASYLOGGINGPP_H
+    INITIALIZE_EASYLOGGINGPP
+#endif
 
-INITIALIZE_EASYLOGGINGPP
 
-#define DEFAULT_PORT 69
 const char* serverIP = "127.0.0.1";
 const char* END_SERVER_MSG = "END_SERVER";
 bool END_SERVER_PROCESS = false;
-int createUDPSocket(const char* socketIP, int socketPORT);
+
+class ClientHandler {
+    private:
+        char root_file[TFTP_MAX_DATA_SIZE];
+    public:
+        struct sockaddr_in clientAddress;
+        uint16_t requestType; //RRQ or WRQ
+        char requestFileName[TFTP_MAX_DATA_SIZE];
+        char operationMode[TFTP_MAX_MODE_SIZE]; // Currently operates only in octate mode
+
+        ClientHandler();
+        ClientHandler(sockaddr_in clientAddress, uint16_t requestType, char* requestFileName, char* operationMode);
+        void printVals();
+};
+
+void handleIncommingRequests(int serverSock);
+void handleClient(ClientHandler curClient);
 
 #endif

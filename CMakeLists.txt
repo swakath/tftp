@@ -9,6 +9,7 @@ include_directories(include)
 
 set(SOURCES
     src/easylogging++.cc
+    src/tftp_socket.cpp
     src/tftp_server.cpp
 )
 

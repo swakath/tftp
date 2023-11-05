@@ -13,67 +13,117 @@
 
 #include "tftp_server.hpp"
 
-int createUDPSocket(const char* socketIP, int socketPORT){
-    // socket file discriptor to be returned
-	int sockfd;
-	struct sockaddr_in serv_addr;
+/**
+ * @brief constructor for ClientHandler Class
+*/
+ClientHandler::ClientHandler(){
+	memset(root_file, 0, sizeof(root_file));
+	requestType = 0;
+	memset(requestFileName, 0, sizeof(requestFileName));
 
-	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    // checking if the socket creation succeeded
-    if(sockfd == -1){
-        LOG(FATAL) << "Error creating socket: "<< strerror(errno);
-        exit(EXIT_FAILURE);
-    }
-
-	// clearing server address struct
-	memset(&serv_addr, 0, sizeof(serv_addr));
-
-	serv_addr.sin_family = AF_INET;  // using IPv4 address family
-
-	if (inet_pton(AF_INET, socketIP, &(serv_addr.sin_addr.s_addr)) !=1) {
-        LOG(FATAL) << "Error converting IP address: " << strerror(errno);
-        exit(EXIT_FAILURE);
-    }
-
-	serv_addr.sin_port = htons(socketPORT); // set network port; if port=0 system determines the port
-
-	// associate the socket with its local address
-	int bound = bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
-
-    // checking if the socket bind succeeded
-    if(bound == -1){
-        LOG(FATAL) << "Error binding socket: "<< strerror(errno);
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-	// retrieve and print server formatted IP address xxx.xxx.xxx.xxx
-	char ip[17];
-	inet_ntop(serv_addr.sin_family, (void *)&serv_addr.sin_addr, ip, sizeof(ip));
-     
-	//Debug messages
-	sprintf(log_message, "New Socket Created: IP [%s] Port [%d]", ip, ntohs(serv_addr.sin_port));
-	LOG(INFO) << log_message;
-
-	return sockfd;
+	//Currently only OCTET mode is supported
+	strcpy(operationMode, TFTP_MODE_OCTET);
 }
 
-void handleIncommingRequests(int defaultServerSock){
-	char buffer[1024];
-    
+/**
+ * @brief 
+*/
+
+ClientHandler::ClientHandler(sockaddr_in clientAddress, uint16_t requestType, char* requestFileName, char* operationMode){
+	this->clientAddress = clientAddress;
+	this->requestType = requestType;
+	strcpy(this->requestFileName, requestFileName);
+	// Currently only OCTET mode is supported
+	strcpy(this->operationMode , operationMode);
+}
+
+void ClientHandler::printVals(){
+	memset(log_message,0,sizeof(log_message));
+	sprintf(log_message, "Client Obj Vals: IP[%s] Port[%d] fileName[%s] mode[%s]", inet_ntoa(clientAddress.sin_addr), ntohs(clientAddress.sin_port), requestFileName, operationMode);
+	LOG(INFO) << log_message;
+	return;
+}
+/**
+ * @brief function creates upd socket for the correspinding IP and PORT
+*/
+void handleIncommingRequests(int serverSock){
+	
+	char recvBuffer[TFTP_MAX_PACKET_SIZE];
+    uint16_t opcode;
+	char fileName[TFTP_MAX_DATA_SIZE];
+	char mode[TFTP_MAX_MODE_SIZE];
+	std::vector<ClientHandler> clientObjects;
+	std::vector<std::thread> clientThreads;
+
 	while (!END_SERVER_PROCESS) {
         struct sockaddr_in clientAddress;
         socklen_t clientAddressLength = sizeof(clientAddress);
-        ssize_t bytesReceived = recvfrom(defaultServerSock, buffer, sizeof(buffer), 0, (struct sockaddr*)&clientAddress, &clientAddressLength);
+		memset(recvBuffer, 0, sizeof(recvBuffer));
+
+        ssize_t bytesReceived = recvfrom(serverSock, recvBuffer, sizeof(recvBuffer), 0, (struct sockaddr*)&clientAddress, &clientAddressLength);
 
         if (bytesReceived == -1) {
-            std::cerr << "Error receiving data: " << strerror(errno) << std::endl;
-            break;
+            LOG(ERROR) << "Error receiving data: " << strerror(errno);
+            continue;
         }
 
-        std::cout << "Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data: " << buffer << std::endl;
-    }
+		LOG(INFO) << "Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
+		
+		// Checking sanity of recvBuffer
+		if(sizeof(recvBuffer) <= TFTP_MIN_CONN_INIT_PACKET_SIZE*sizeof(uint8_t)){
+			LOG(ERROR) <<"Invalid request in port: "<<TFTP_DEFAULT_PORT;
+			continue;
+		}
+
+		opcode = TFTP_OPCODE_ND;
+		memset(fileName, 0, sizeof(fileName));
+		memset(mode, 0, sizeof(mode));
+
+		// retriving opcode
+		opcode = (uint16_t)(((recvBuffer[1] & 0xFF) << 8) | (recvBuffer[0] & 0XFF));
+		sprintf(log_message, "recv [%X][%X] raw opcode [%X]", recvBuffer[0], recvBuffer[1], opcode);
+		LOG(INFO)<<log_message;	
+		opcode = ntohs(opcode);
+
+		if(opcode!=TFTP_OPCODE_RRQ && opcode!=TFTP_OPCODE_WRQ){
+			LOG(ERROR)<<"Recv"<<opcode<<", Comp"<<TFTP_OPCODE_RRQ<<":"<<TFTP_OPCODE_WRQ;
+			LOG(ERROR)<<"Incompatable OPCODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port);
+			continue;
+		}
+		
+		// retriving file name
+		strcpy(fileName, (char*)(recvBuffer+2));
+
+		// retriving communication mode
+		strcpy(mode,(char*)(recvBuffer + 2 + strlen(fileName) + 1));
+		
+		for (int i = 0; mode[i] != '\0'; i++) {
+        	mode[i] = std::tolower(mode[i]);
+		}
+
+		if(std::strcmp(TFTP_MODE_OCTET, mode)!=0){
+			LOG(ERROR)<<"Offset value" << 2+strlen(fileName)+1;
+			LOG(ERROR)<<"Incompatable MODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port)<<"mode: "<<mode;
+			continue;
+		}
+
+		memset(log_message,0,sizeof(log_message));
+		sprintf(log_message, "Connection request received: IP[%s] Port[%d] fileName[%s] mode[%s]", inet_ntoa(clientAddress.sin_addr), ntohs(clientAddress.sin_port), fileName, mode);
+		LOG(INFO) << log_message;
+
+		ClientHandler curClientHandlerObj(clientAddress, opcode, fileName, mode);
+		clientObjects.emplace_back(curClientHandlerObj);
+		curClientHandlerObj.printVals();
+		//std::thread curClientHandle(handleClient, curClientHandlerObj);
+		//clientThreads.emplace_back(curClientHandle);
+	}
+
+	/*
+	for(int i = ; i<clientThreads.size(); ++i){
+		clientThreads[i].join();
+	}
+	*/
+
 	return;
 }
 
@@ -101,7 +151,7 @@ int main(int argc, char* argv[]){
     el::Loggers::reconfigureLogger("default", defaultConf);
 
     int defaultServerSock;
-	defaultServerSock = createUDPSocket(serverIP, DEFAULT_PORT);
+	defaultServerSock = createUDPSocket(serverIP, TFTP_DEFAULT_PORT);
     END_SERVER_PROCESS = false;
 
 	std::thread incommingThread(handleIncommingRequests, defaultServerSock);
