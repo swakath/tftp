@@ -31,9 +31,12 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <thread>
+#include <mutex>
 
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <utility>
 
 #ifndef EASYLOGGINGPP_H
     #include "easylogging++.h"

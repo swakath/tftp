@@ -1,17 +1,14 @@
-#include "include/common.hpp"
-#include "include/easylogging++.h"
+#include <iostream>
+#include <fstream>
+#include <string>
 
-INITIALIZE_EASYLOGGINGPP
-
+using namespace std;
 int main(int argc, char* argv[]){
-
-    START_EASYLOGGINGPP(argc, argv);
-    el::Configurations defaultConf;
-    defaultConf.setToDefault();
-    defaultConf.set(el::Level::Global, el::ConfigurationType::ToStandardOutput, "false");
-    defaultConf.set(el::Level::Global, el::ConfigurationType::Filename, "logs/logfile.log");
-    el::Loggers::reconfigureLogger("default", defaultConf);
-
-    LOG(INFO) << "Ankit";
+    string file_path = "your_file.txt";
+    fstream file(file_path, ios::out);
+    cout<<file.is_open()<<file<<endl;
+    fstream f2(file_path, ios::out);
+    cout<<f2.is_open()<<f2<<endl;
+    while(1){}
     return 0;
 }

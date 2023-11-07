@@ -15,6 +15,6 @@
     #include "tftp_common.hpp"
 #endif
 
-int makeErrorPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t errorCode, const char* msgError);
+int makeErrorPacket(uint8_t* sendBuffer, size_t bufferLen, TftpErrorCode errorCode, const char* msgError);
 
 #endif
