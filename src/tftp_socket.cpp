@@ -12,7 +12,9 @@
 */ 
 
 #include "tftp_socket.hpp"
-
+/**
+ * @brief function to create socket for the specified IP and PORT
+*/
 int createUDPSocket(const char* socketIP, int socketPORT){
     // socket file discriptor to be returned
 	int sockfd;
@@ -22,8 +24,8 @@ int createUDPSocket(const char* socketIP, int socketPORT){
 
     // checking if the socket creation succeeded
     if(sockfd == -1){
-        LOG(FATAL) << "Error creating socket: "<< strerror(errno);
-        exit(EXIT_FAILURE);
+        LOG(ERROR) << "Error creating socket: "<< strerror(errno)<<" for port "<<socketPORT;
+		return -1;
     }
 
 	// clearing server address struct
@@ -32,8 +34,8 @@ int createUDPSocket(const char* socketIP, int socketPORT){
 	serv_addr.sin_family = AF_INET;  // using IPv4 address family
 
 	if (inet_pton(AF_INET, socketIP, &(serv_addr.sin_addr.s_addr)) !=1) {
-        LOG(FATAL) << "Error converting IP address: " << strerror(errno);
-        exit(EXIT_FAILURE);
+        LOG(ERROR) << "Error converting IP address: " << strerror(errno)<<" for port "<<socketPORT;;
+        return -1;
     }
 
 	serv_addr.sin_port = htons(socketPORT); // set network port; if port=0 system determines the port
@@ -43,9 +45,9 @@ int createUDPSocket(const char* socketIP, int socketPORT){
 
     // checking if the socket bind succeeded
     if(bound == -1){
-        LOG(FATAL) << "Error binding socket: "<< strerror(errno);
+        LOG(ERROR) << "Error binding socket: "<< strerror(errno)<<" for port "<<socketPORT;;
         close(sockfd);
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
 	// retrieve and print server formatted IP address xxx.xxx.xxx.xxx
@@ -57,4 +59,52 @@ int createUDPSocket(const char* socketIP, int socketPORT){
 	LOG(INFO) << log_message;
 
 	return sockfd;
+}
+
+/**
+ * @brief creating udp socket with random available port 
+*/
+int createRandomUDPSocket(const char* socketIP, int* randomPort){
+	if(socketIP != NULL && randomPort != NULL){
+		int numTries = 0;
+		int randomSocketFD;
+		while(numTries < MAX_RANDOM_TRIES){
+			srand(static_cast<unsigned int>(time(nullptr)));
+			int curRandomPort = TFTP_MIN_PORT + (rand() % (TFTP_MAX_PORT - TFTP_MIN_PORT + 1));
+			randomSocketFD = createUDPSocket(socketIP, curRandomPort);
+			if(randomSocketFD != -1){
+				*randomPort = curRandomPort;
+				return randomSocketFD; 
+			}
+			numTries++;
+		}
+		return -1;
+	}
+	else {
+		return -1;
+	}
+}
+
+/**
+ * @brief 
+*/
+int sendBufferThroughUDP(uint8_t* sendBuffer, size_t bufferLen, int socketfd, struct sockaddr_in clientAddress){
+	if(sendBuffer!=NULL && bufferLen > 0 && socketfd > 0){
+		size_t sendLen;
+		socklen_t clientAddressLength = sizeof(clientAddress);
+		sendLen = sendto(socketfd, sendBuffer, bufferLen, 0, (struct sockaddr*)&clientAddress, clientAddressLength);
+		if(sendLen == -1){
+			LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<" msg: Data not send";
+			return -1;
+		}
+		else if(sendLen != bufferLen){
+			LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<" msg: Full buffer not sent";
+			return -1;
+		}
+		else{
+			LOG(INFO)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<" msg: Packet sent successfully";
+			return sendLen;
+		}
+	}
+	return -1;
 }

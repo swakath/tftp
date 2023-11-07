@@ -8,7 +8,7 @@ port = 69  # Replace with the target port number
 udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # Data to send
-opcode = 2
+opcode = 3
 filename = "fileNameSwa"  # Replace with the data you want to send
 mode = "octet"
 # Convert the data to bytes
@@ -23,6 +23,8 @@ print(len(data_bytes))
 # Send the data to the specified IP and port
 udp_socket.sendto(data_bytes, (ip_address, port))
 
+data, client_address = udp_socket.recvfrom(1024)
+print(data.decode('utf-8'))
 # Close the socket when done
 udp_socket.close()
 

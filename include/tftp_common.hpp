@@ -1,5 +1,5 @@
 /**
- * @file common.hpp
+ * @file tftp_common.hpp
  * @brief Common definitions and functions for the TFTP module.
  *
  * This header file contains common definitions, constants, and utility functions
@@ -45,7 +45,8 @@
 #define TFTP_MAX_PACKET_SIZE (TFTP_MAX_DATA_SIZE + TFTP_MAX_HEADER_SIZE)
 #define TFTP_MAX_MODE_SIZE 9
 #define TFTP_MIN_CONN_INIT_PACKET_SIZE 8 //8 bytes minimum rrq/wrq packet size
-
+#define TFTP_MIN_PORT 1024
+#define TFTP_MAX_PORT 65535
 
 #define LOG_BUFF_SIZE 1024
 
@@ -70,7 +71,7 @@ typedef enum : uint16_t
 /**
 * @brief TFTP error codes as per  RFC 1350 
 */
-typedef enum
+typedef enum : uint16_t
 {
     TFTP_ERROR_NOT_DEFINED         = 0,
     TFTP_ERROR_FILE_NOT_FOUND      = 1,

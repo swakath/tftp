@@ -24,6 +24,10 @@ int main(int argc, char* argv[]){
 
     int defaultServerSock;
 	defaultServerSock = createUDPSocket(serverIP, TFTP_DEFAULT_PORT);
+    if(defaultServerSock == -1){
+        LOG(FATAL) <<"Unable to open socket in default port "<<TFTP_DEFAULT_PORT;
+        exit(EXIT_FAILURE);
+    }
     END_SERVER_PROCESS = false;
 
 	std::thread incommingThread(handleIncommingRequests, defaultServerSock);
