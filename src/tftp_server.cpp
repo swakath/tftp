@@ -142,24 +142,3 @@ void handleServerTermination(){
 	return;
 }
 
-int main(int argc, char* argv[]){
-    START_EASYLOGGINGPP(argc, argv);    
-    el::Configurations defaultConf;
-    defaultConf.setToDefault();
-    //defaultConf.set(el::Level::Global, el::ConfigurationType::ToStandardOutput, "false");
-    defaultConf.set(el::Level::Global, el::ConfigurationType::Filename, "logs/logServer.log");
-    el::Loggers::reconfigureLogger("default", defaultConf);
-
-    int defaultServerSock;
-	defaultServerSock = createUDPSocket(serverIP, TFTP_DEFAULT_PORT);
-    END_SERVER_PROCESS = false;
-
-	std::thread incommingThread(handleIncommingRequests, defaultServerSock);
-	std::thread terminationThread(handleServerTermination);
-
-	incommingThread.join();
-	terminationThread.join();
-
-	close(defaultServerSock);
-	return 0;
-}

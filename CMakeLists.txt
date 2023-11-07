@@ -8,6 +8,7 @@ find_package(Threads REQUIRED)
 include_directories(include)
 
 set(SOURCES
+    src/server_main.cpp
     src/easylogging++.cc
     src/tftp_socket.cpp
     src/tftp_server.cpp

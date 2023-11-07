@@ -18,14 +18,9 @@
     #include "tftp_socket.hpp"
 #endif
 
-#ifdef EASYLOGGINGPP_H
-    INITIALIZE_EASYLOGGINGPP
-#endif
-
-
-const char* serverIP = "127.0.0.1";
-const char* END_SERVER_MSG = "END_SERVER";
-bool END_SERVER_PROCESS = false;
+static const char* serverIP = "127.0.0.1";
+static const char* END_SERVER_MSG = "END_SERVER";
+static bool END_SERVER_PROCESS = false;
 
 class ClientHandler {
     private:
@@ -42,6 +37,7 @@ class ClientHandler {
 };
 
 void handleIncommingRequests(int serverSock);
+void handleServerTermination();
 void handleClient(ClientHandler curClient);
 
 #endif
