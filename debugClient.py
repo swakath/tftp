@@ -9,8 +9,8 @@ udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 # Data to send
 opcode = 1
-filename = "file1.txt"  # Replace with the data you want to send
-mode = "octet"
+filename = "file2.txt"  # Replace with the data you want to send
+mode = "ocet"
 # Convert the data to bytes
 data_bytes = b''
 data_bytes = data_bytes + opcode.to_bytes(2, "big")

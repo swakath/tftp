@@ -46,13 +46,11 @@ class ClientHandler {
         //std::ifstream fdRead;
         //std::ofstream fdWrite;
         char operationMode[TFTP_MAX_MODE_SIZE]; // Currently operates only in octate mode
-
         ClientHandler();
         ClientHandler(int defaultServerSocket, sockaddr_in clientAddress, uint16_t requestType, char* requestFileName, char* operationMode);
         void printVals();
 };
  
-void test(int a);
 void handleClient(ClientHandler curClient);
 void handleIncommingRequests(int serverSock);
 void handleServerTermination();

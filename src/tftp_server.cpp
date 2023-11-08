@@ -154,11 +154,6 @@ void handleServerTermination(){
 	return;
 }
 
-void test(int a){
-	LOG(INFO)<<a;
-	return;
-}
-
 void handleClient(ClientHandler curClient){
 	int clientPort = 0;
 	int clientSocketFD = 0;
@@ -210,6 +205,52 @@ void handleClient(ClientHandler curClient){
 			sendBufferThroughUDP(sendBuffer, sizeof(sendBuffer), curClient.defaultServerSocket, curClient.clientAddress);
 			return;
 		}
+	}
+	else if(curClient.requestType == TFTP_OPCODE_WRQ){
+		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: Write request process initiated";
+		std::ofstream fd;
+		TftpErrorCode errorCode;
+		fd = STARK::getInstance().isFileWritable(curClient.requestFileName, errorCode);
+		if(fd.is_open()){
+			//curClient.fdRead = std::move(fd);
+			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Open Success";
+			LOG(DEBUG)<<"fd status:"<<fd.is_open();
+			std::string debg= "I am GOD";
+			fd << debg;
+			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Content: "<<debg;
+			
+			bool ret;
+			ret = STARK::getInstance().closeWritableFile(curClient.requestFileName, fd);
+			if(ret){
+				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Success";
+			}
+			else{
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Error";
+			}
+			return;
+		}
+		else{
+			if(errorCode == TFTP_ERROR_FILE_ALREADY_EXISTS){
+				makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_FILE_ALREADY_EXISTS, "file already exists in server");
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<"msg: file already exists in server";
+			}
+			else if(errorCode == TFTP_ERROR_ACCESS_VIOLATION){
+				makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ACCESS_VIOLATION, "file access denied in server");
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<"msg: file access denied in server";
+			}
+			else{
+				makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "unknown error from server");
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<"msg: unknown error from server";
+			}
+			sendBufferThroughUDP(sendBuffer, sizeof(sendBuffer), curClient.defaultServerSocket, curClient.clientAddress);
+			return;
+		}
+	}
+	else{
+		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<"msg: invalid opcode";
+		makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "invalid opcode during internal processing");
+		sendBufferThroughUDP(sendBuffer, sizeof(sendBuffer), curClient.defaultServerSocket, curClient.clientAddress);
+		return;
 	}
 	return;
 }

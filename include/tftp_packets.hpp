@@ -16,5 +16,7 @@
 #endif
 
 int makeErrorPacket(uint8_t* sendBuffer, size_t bufferLen, TftpErrorCode errorCode, const char* msgError);
-
+int makeComInitPacket(TftpOpcode opcode,uint8_t* sendBuffer, size_t bufferLen, const char* fileName, const char* mode);
+int makeACKPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t blockNum);
+int makeDataPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t blockNum, uint8_t* data, size_t dataLen);
 #endif
