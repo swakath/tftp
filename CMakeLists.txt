@@ -11,8 +11,10 @@ set(SOURCES
     src/server_main.cpp
     src/easylogging++.cc
     src/tftp_socket.cpp
-    src/tftp_server.cpp
     src/tftp_packets.cpp
+    src/tftp_stark.cpp
+    src/tftp_server.cpp
+    
 )
 
 # Create an executable from the source files

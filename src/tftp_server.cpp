@@ -48,167 +48,6 @@ void ClientHandler::printVals(){
 	return;
 }
 
-
-/**
- * @brief function to set root directory
-*/
-void STARK::setRootDir(const char* directory){
-	if(directory!=NULL)
-		root_dir.assign(directory);
-	return;
-}
-
-/**
- * @brief function to check if a file is having read permission
- * opens the file in read more if the permission exists and return the file object
-*/
-std::ifstream STARK::isFileReadable(std::string fileName, TftpErrorCode& errorCode){
-	errorCode = TFTP_ERROR_ACCESS_VIOLATION;
-	if(!fileName.empty()){
-		std::string filePath = root_dir + fileName;
-		std::ifstream fd(filePath.c_str());
-		if(fd.is_open()){
-			std::lock_guard<std::mutex> lock(mutexObj);
-			if (fileData.find(fileName) != fileData.end()){
-				if(fileData[fileName].second == false){
-					int readerCnt = fileData[fileName].first;
-					LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in read mode and reader cnt incremented"<<readerCnt+1;
-					fileData[fileName].first = readerCnt + 1; 
-					return fd;
-				}
-				else{
-					LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file already opened in write mode. Wait until freed";	
-					errorCode = TFTP_ERROR_ACCESS_VIOLATION;
-					fd.close();
-					return std::ifstream();
-				}
-			}
-			else{
-				fileData.insert({fileName, std::make_pair(1,false)});
-				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in read mode and inserted in the map";
-				return fd;
-			}
-		}
-		else{
-			fd.close();
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file not found";
-			errorCode = TFTP_ERROR_FILE_NOT_FOUND;
-			return std::ifstream();
-		}
-	}
-	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL";
-		return std::ifstream();
-	}
-	return std::ifstream();
-}
-
-/**
- * @brief function to check if a file is having write permission
- * opens the file in write mode if the permission exists and return the file object
-*/
-std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCode){
-	errorCode = TFTP_ERROR_ACCESS_VIOLATION;
-	if(!fileName.empty()){
-		std::string filePath = root_dir + fileName;
-		std::ifstream fileRead(filePath.c_str());
-		if(fileRead.is_open()){
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file already exists";
-			errorCode = TFTP_ERROR_FILE_ALREADY_EXISTS;
-			fileRead.close();
-			return std::ofstream();
-		}
-		else{
-			fileRead.close();
-			std::ofstream fileWrite(filePath.c_str());
-			if(fileWrite.is_open()){
-				std::lock_guard<std::mutex> lock(mutexObj);
-				if (fileData.find(fileName) == fileData.end()){
-					fileData.insert({fileName, std::make_pair(0,true)});
-					LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in write mode and inserted in the map";
-					return fileWrite;
-				}
-				else{
-					LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file not in directory but present in map.";
-					errorCode = TFTP_ERROR_NOT_DEFINED;
-					fileWrite.close();
-					return std::ofstream();
-				}
-			}
-			else{
-				fileWrite.close();
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: unable to open file in write mode";
-				errorCode = TFTP_ERROR_ACCESS_VIOLATION;
-				return std::ofstream();
-			}
-		}
-	}
-	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL";
-		return std::ofstream();
-	}
-	return std::ofstream();
-}
-
-/**
- * @brief function to close a readable file (ifstream file)
-*/
-bool STARK::closeReadableFile(std::string fileName, std::ifstream fd){
-	if(!fileName.empty() && !fd.is_open()){
-		fd.close();
-		std::lock_guard<std::mutex> lock(mutexObj);
-		if (fileData.find(fileName) != fileData.end()){
-			int readCnt = fileData[fileName].first;
-			if(readCnt > 0){
-				readCnt--;
-				fileData[fileName].first = readCnt;
-			}
-			else{
-				LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file open but read cnt already zero";
-				return false;
-			}	
-		}
-		else{
-			LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: read file open but not in list";
-			return false;
-		}
-	} 
-	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL  or file as already closed name:" <<fileName;
-		return false;
-	}
-}
-
-
-/**
- * @brief 
-*/
-bool STARK::closeWritableFile(std::string fileName, std::ofstream fd){
-	if(!fileName.empty() && !fd.is_open()){
-		fd.close();
-		std::lock_guard<std::mutex> lock(mutexObj);
-		if (fileData.find(fileName) != fileData.end()){
-			bool writeStatus = fileData[fileName].second;
-			if(writeStatus == true){
-				writeStatus = false;
-				fileData[fileName].second = writeStatus;
-			}
-			else{
-				LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: wrte file open but write status already false";
-				return false;
-			}	
-		}
-		else{
-			LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file open but not in list";
-			return false;
-		}
-	} 
-	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL  or file as already closed name:" <<fileName;
-		return false;
-	}
-}
-
 /**
  * @brief function to handle incomming client request to default TFTP server port
 */
@@ -230,15 +69,15 @@ void handleIncommingRequests(int serverSock){
         ssize_t bytesReceived = recvfrom(serverSock, recvBuffer, sizeof(recvBuffer), 0, (struct sockaddr*)&clientAddress, &clientAddressLength);
 
         if (bytesReceived == -1) {
-            LOG(ERROR) << "Error receiving data: " << strerror(errno);
+            LOG(ERROR) <<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Error receiving data: " << strerror(errno);
             continue;
         }
 
-		LOG(INFO) << "Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
+		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
 		
 		// Checking sanity of recvBuffer
 		if(sizeof(recvBuffer) <= TFTP_MIN_CONN_INIT_PACKET_SIZE*sizeof(uint8_t)){
-			LOG(ERROR) <<"Invalid request in port: "<<TFTP_DEFAULT_PORT;
+			LOG(ERROR) <<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Invalid request in port: "<<TFTP_DEFAULT_PORT;
 			continue;
 		}
 
@@ -253,8 +92,8 @@ void handleIncommingRequests(int serverSock){
 		opcode = ntohs(opcode);
 
 		if(opcode!=TFTP_OPCODE_RRQ && opcode!=TFTP_OPCODE_WRQ){
-			LOG(ERROR)<<"Recv"<<opcode<<", Comp"<<TFTP_OPCODE_RRQ<<":"<<TFTP_OPCODE_WRQ;
-			LOG(ERROR)<<"Incompatable OPCODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port);
+			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ",msg: Recv"<<opcode<<", Comp"<<TFTP_OPCODE_RRQ<<":"<<TFTP_OPCODE_WRQ;
+			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Incompatable OPCODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port);
 			makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ILLEGAL_OPERATION, "opcode invalid");
 			sendBufferThroughUDP(sendBuffer, sizeof(sendBuffer), serverSock, clientAddress);
 			continue;
@@ -271,8 +110,8 @@ void handleIncommingRequests(int serverSock){
 		}
 
 		if(std::strcmp(TFTP_MODE_OCTET, mode)!=0){
-			LOG(ERROR)<<"Offset value" << 2+strlen(fileName)+1;
-			LOG(ERROR)<<"Incompatable MODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port)<<"mode: "<<mode;
+			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Offset value" << 2+strlen(fileName)+1;
+			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Incompatable MODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port)<<"mode: "<<mode;
 			makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ILLEGAL_OPERATION, "incompatable mode");
 			sendBufferThroughUDP(sendBuffer, sizeof(sendBuffer), serverSock, clientAddress);
 			continue;
@@ -280,21 +119,20 @@ void handleIncommingRequests(int serverSock){
 
 		memset(log_message,0,sizeof(log_message));
 		sprintf(log_message, "Connection request received: IP[%s] Port[%d] fileName[%s] mode[%s]", inet_ntoa(clientAddress.sin_addr), ntohs(clientAddress.sin_port), fileName, mode);
-		LOG(INFO) << log_message;
+		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: "<<log_message;
 
 		ClientHandler curClientHandlerObj(serverSock ,clientAddress, opcode, fileName, mode);
-		clientObjects.emplace_back(curClientHandlerObj);
+		clientObjects.push_back(curClientHandlerObj);
 		curClientHandlerObj.printVals();
-		//std::thread curClientHandle(handleClient, curClientHandlerObj);
-		//clientThreads.emplace_back(curClientHandle);
+		std::thread curClientHandle(handleClient, curClientHandlerObj);
+		int a = 10;
+		//std::thread curClientHandle(test, a);
+		clientThreads.push_back(std::move(curClientHandle));
 	}
 
-	/*
-	for(int i = ; i<clientThreads.size(); ++i){
+	for(int i = 0 ; i<clientThreads.size(); ++i){
 		clientThreads[i].join();
 	}
-	*/
-
 	return;
 }
 
@@ -316,6 +154,10 @@ void handleServerTermination(){
 	return;
 }
 
+void test(int a){
+	LOG(INFO)<<a;
+	return;
+}
 
 void handleClient(ClientHandler curClient){
 	int clientPort = 0;
@@ -330,7 +172,44 @@ void handleClient(ClientHandler curClient){
 		return;
 	}
 	if(curClient.requestType == TFTP_OPCODE_RRQ){
-
+		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: Read request process initiated";
+		std::ifstream fd;
+		TftpErrorCode errorCode; 
+		fd = STARK::getInstance().isFileReadable(curClient.requestFileName, errorCode);
+		if(fd.is_open()){
+			//curClient.fdRead = std::move(fd);
+			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Open Success";
+			LOG(DEBUG)<<"fd status:"<<fd.is_open();
+			std::string debg;
+			fd >> debg;
+			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Content"<<debg;
+			
+			bool ret;
+			ret = STARK::getInstance().closeReadableFile(curClient.requestFileName, fd);
+			if(ret){
+				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Success";
+			}
+			else{
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Error";
+			}
+			return;
+		}
+		else{
+			if(errorCode == TFTP_ERROR_ACCESS_VIOLATION){
+				makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ACCESS_VIOLATION, "file opened in write mode by another client");
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<"msg: file opened in write mode by another client";
+			}
+			else if(errorCode == TFTP_ERROR_FILE_NOT_FOUND){
+				makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_FILE_NOT_FOUND, "file not found in server");
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<"msg: file not found in server";
+			}
+			else{
+				makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "unknown error from server");
+				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<"msg: unknown error from server";
+			}
+			sendBufferThroughUDP(sendBuffer, sizeof(sendBuffer), curClient.defaultServerSocket, curClient.clientAddress);
+			return;
+		}
 	}
-
+	return;
 }

@@ -29,7 +29,7 @@ int main(int argc, char* argv[]){
         exit(EXIT_FAILURE);
     }
     END_SERVER_PROCESS = false;
-
+    STARK::getInstance().setRootDir(serverDir);
 	std::thread incommingThread(handleIncommingRequests, defaultServerSock);
 	std::thread terminationThread(handleServerTermination);
 
