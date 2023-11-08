@@ -129,11 +129,43 @@ int makeDataPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t blockNum, uin
         sendBuffer[indx+1] = (uint8_t)((networkBlockNum>>8) & 0xFF);
         indx += 2;
         // Copying Data to Data packet
-        memcpy(sendBuffer+indx, data, dataLen);
-        indx += dataLen;
+        if(dataLen > 0){
+            memcpy(sendBuffer+indx, data, dataLen);
+            indx += dataLen;
+        }
         return indx;
     }
     else{
+        return -1;
+    }
+    return -1;
+}
+
+/**
+ * @brief function reads maximum 512 bytes of data from a ifstream file are copies the info into a buffer 
+*/
+
+int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
+    if(dataBuffer!=NULL && bufferLen >= TFTP_MAX_DATA_SIZE && fd.is_open()){
+        memset(dataBuffer, 0, bufferLen);
+        int bytesRead;
+        if(!fd.eof()){
+            fd.read(reinterpret_cast<char*>(dataBuffer), bufferLen);
+            if(fd.bad()){
+                LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file read error";
+                return -1;
+            }
+            bytesRead = static_cast<int>(fd.gcount());
+            LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg:"<<bytesRead<<" bytes read successful";
+            return bytesRead;
+        }
+        else{
+            LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: eof retruned 0 bytes read successful";
+            return 0;
+        }
+    }
+    else{
+        LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: input argument error";
         return -1;
     }
     return -1;

@@ -23,7 +23,7 @@ int main(int argc, char* argv[]){
     el::Loggers::reconfigureLogger("default", defaultConf);
 
     int defaultServerSock;
-	defaultServerSock = createUDPSocket(serverIP, TFTP_DEFAULT_PORT);
+	defaultServerSock = createUDPSocket(serverIP, TFTP_DEFAULT_PORT, TFTP_SERVER_SOCKET_TIMEOUT);
     if(defaultServerSock == -1){
         LOG(FATAL) <<"Unable to open socket in default port "<<TFTP_DEFAULT_PORT;
         exit(EXIT_FAILURE);

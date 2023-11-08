@@ -36,7 +36,7 @@ std::ifstream STARK::isFileReadable(std::string fileName, TftpErrorCode& errorCo
 		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<fileName;
 		std::string filePath = root_dir + fileName;
 		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<filePath;
-		std::ifstream fd(filePath.c_str());
+		std::ifstream fd(filePath.c_str(),  std::ios::binary);
 		if(fd.is_open()){
 			std::lock_guard<std::mutex> lock(mutexObj);
 			if (fileData.find(fileName) != fileData.end()){
@@ -83,7 +83,7 @@ std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCo
 		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<fileName;
 		std::string filePath = root_dir + fileName;
 		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<filePath;
-		std::ifstream fileRead(filePath.c_str());
+		std::ifstream fileRead(filePath.c_str(), std::ios::binary);
 		if(fileRead.is_open()){
 			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file already exists";
 			errorCode = TFTP_ERROR_FILE_ALREADY_EXISTS;
@@ -92,7 +92,7 @@ std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCo
 		}
 		else{
 			fileRead.close();
-			std::ofstream fileWrite(filePath.c_str());
+			std::ofstream fileWrite(filePath.c_str(), std::ios::binary);
 			if(fileWrite.is_open()){
 				std::lock_guard<std::mutex> lock(mutexObj);
 				if (fileData.find(fileName) == fileData.end()){
