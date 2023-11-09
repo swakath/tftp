@@ -51,8 +51,6 @@ class ClientHandler {
         void printVals();
 };
 
-bool getACK(ClientHandler curClient);
-bool getData(ClientHandler curClient, uint8_t* recvDataBuffer,size_t bufferSize, int& dataLen);
 void handleClient(ClientHandler curClient);
 void handleIncommingRequests(int serverSock);
 void handleServerTermination();

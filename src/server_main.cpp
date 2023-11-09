@@ -20,7 +20,7 @@ int main(int argc, char* argv[]){
     defaultConf.setToDefault();
     defaultConf.set(el::Level::Global, el::ConfigurationType::Format, "%datetime [%level] [%thread] [%func][%line] %msg");
     
-    defaultConf.set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+    //defaultConf.set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
     //defaultConf.set(el::Level::Global, el::ConfigurationType::ToStandardOutput, "false");
     defaultConf.set(el::Level::Global, el::ConfigurationType::Filename, "logs/logServer.log");
     
