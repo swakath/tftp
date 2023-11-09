@@ -72,15 +72,15 @@ void handleIncommingRequests(int serverSock){
         ssize_t bytesReceived = recvfrom(serverSock, recvBuffer, sizeof(recvBuffer), 0, (struct sockaddr*)&clientAddress, &clientAddressLength);
 
         if (bytesReceived == -1) {
-            LOG(ERROR) <<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Error receiving data: " << strerror(errno);
+            LOG(ERROR) <<"Error receiving data: "<< strerror(errno);
             continue;
         }
 
-		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
+		LOG(DEBUG)<<"Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
 		
 		// Checking sanity of recvBuffer
 		if(sizeof(recvBuffer) <= TFTP_MIN_CONN_INIT_PACKET_SIZE*sizeof(uint8_t)){
-			LOG(ERROR) <<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Invalid request in port: "<<TFTP_DEFAULT_PORT;
+			LOG(ERROR) << "Invalid request in port: "<<TFTP_DEFAULT_PORT;
 			continue;
 		}
 
@@ -96,8 +96,8 @@ void handleIncommingRequests(int serverSock){
 
 		if(opcode!=TFTP_OPCODE_RRQ && opcode!=TFTP_OPCODE_WRQ){
 			packetSize = 0;
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ",msg: Recv"<<opcode<<", Comp"<<TFTP_OPCODE_RRQ<<":"<<TFTP_OPCODE_WRQ;
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Incompatable OPCODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port);
+			LOG(ERROR)<< "Recv"<<opcode<<", Comp"<<TFTP_OPCODE_RRQ<<":"<<TFTP_OPCODE_WRQ;
+			LOG(ERROR)<< "Incompatable OPCODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port);
 			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ILLEGAL_OPERATION, "opcode invalid");
 			sendBufferThroughUDP(sendBuffer, packetSize, serverSock, clientAddress);
 			continue;
@@ -115,8 +115,8 @@ void handleIncommingRequests(int serverSock){
 
 		if(std::strcmp(TFTP_MODE_OCTET, mode)!=0){
 			packetSize = 0;
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Offset value" << 2+strlen(fileName)+1;
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Incompatable MODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port)<<"mode: "<<mode;
+			LOG(ERROR)<< "Offset value" << 2+strlen(fileName)+1;
+			LOG(ERROR)<< "Incompatable MODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port)<<"mode: "<<mode;
 			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ILLEGAL_OPERATION, "incompatable mode");
 			sendBufferThroughUDP(sendBuffer, packetSize, serverSock, clientAddress);
 			continue;
@@ -124,7 +124,7 @@ void handleIncommingRequests(int serverSock){
 
 		memset(log_message,0,sizeof(log_message));
 		sprintf(log_message, "Connection request received: IP[%s] Port[%d] fileName[%s] mode[%s]", inet_ntoa(clientAddress.sin_addr), ntohs(clientAddress.sin_port), fileName, mode);
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: "<<log_message;
+		LOG(INFO)<<log_message;
 
 		ClientHandler curClientHandlerObj(serverSock ,clientAddress, opcode, fileName, mode);
 		clientObjects.push_back(curClientHandlerObj);
@@ -174,31 +174,31 @@ void handleClient(ClientHandler curClient){
 		return;
 	}
 	curClient.clientSocket = clientSocketFD;
-    LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: new port"<<clientPort<<" new fd:"<<clientSocketFD<<"default fd: "<<curClient.defaultServerSocket;
+    LOG(INFO)<<"new port"<<clientPort<<" new fd:"<<clientSocketFD<<"default fd: "<<curClient.defaultServerSocket;
 	if(curClient.requestType == TFTP_OPCODE_RRQ){
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: Read request process initiated";
+		LOG(INFO)<<"Read request process initiated";
 		std::ifstream fd;
 		TftpErrorCode errorCode; 
 		fd = STARK::getInstance().isFileReadable(curClient.requestFileName, errorCode);
 		if(fd.is_open()){
-			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Open Success";
+			LOG(DEBUG)<<"File Open Success";
 			bool ret;
 			ret = handleSendData(curClient, fd);
 			if(ret){
-				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: All data sent";
+				LOG(INFO)<<"All data sent";
 			}
 			else{
 				packetSize = 0;
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: Data not sent";
+				LOG(ERROR)<<"Data not sent";
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "error connection terminating");
 				sendBufferThroughUDP(sendBuffer, packetSize, curClient.clientSocket, curClient.clientAddress);
 			}
 			ret = STARK::getInstance().closeReadableFile(curClient.requestFileName, fd);
 			if(ret){
-				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Success";
+				LOG(INFO)<<"File Close Success";
 			}
 			else{
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Error";
+				LOG(ERROR)<<"File Close Error";
 			}
 			close(clientSocketFD);
 			return;
@@ -207,15 +207,15 @@ void handleClient(ClientHandler curClient){
 			packetSize = 0;
 			if(errorCode == TFTP_ERROR_ACCESS_VIOLATION){
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ACCESS_VIOLATION, "file opened in write mode by another client");
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in write mode by another client";
+				LOG(ERROR)<<"file opened in write mode by another client";
 			}
 			else if(errorCode == TFTP_ERROR_FILE_NOT_FOUND){
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_FILE_NOT_FOUND, "file not found in server");
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file not found in server";
+				LOG(ERROR)<<"file not found in server";
 			}
 			else{
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "unknown error from server");
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: unknown error from server";
+				LOG(ERROR)<<"unknown error from server";
 			}
 			sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
 			close(clientSocketFD);
@@ -223,29 +223,29 @@ void handleClient(ClientHandler curClient){
 		}
 	}
 	else if(curClient.requestType == TFTP_OPCODE_WRQ){
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: Write request process initiated";
+		LOG(INFO)<<"Write request process initiated";
 		std::ofstream fd;
 		TftpErrorCode errorCode;
 		fd = STARK::getInstance().isFileWritable(curClient.requestFileName, errorCode);
 		if(fd.is_open()){
-			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Open Success";
+			LOG(INFO)<<"File Open Success";
 			bool ret;
 			ret = handleReceiveData(curClient, fd);
 			if(ret){
-				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: All data sent";
+				LOG(INFO)<<"All data sent";
 			}
 			else{
 				packetSize = 0;
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File not received";
+				LOG(ERROR)<<"File not received";
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "error connection terminating");
 				sendBufferThroughUDP(sendBuffer, packetSize, curClient.clientSocket, curClient.clientAddress);
 			}
 			ret = STARK::getInstance().closeWritableFile(curClient.requestFileName, fd);
 			if(ret){
-				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Success";
+				LOG(INFO)<<"File Close Success";
 			}
 			else{
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Close Error";
+				LOG(ERROR)<<"File Close Error";
 			}
 			close(clientSocketFD);
 			return;
@@ -254,15 +254,15 @@ void handleClient(ClientHandler curClient){
 			packetSize = 0;
 			if(errorCode == TFTP_ERROR_FILE_ALREADY_EXISTS){
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_FILE_ALREADY_EXISTS, "file already exists in server");
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file already exists in server";
+				LOG(ERROR)<<"file already exists in server";
 			}
 			else if(errorCode == TFTP_ERROR_ACCESS_VIOLATION){
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ACCESS_VIOLATION, "file access denied in server");
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file access denied in server";
+				LOG(ERROR)<<"file access denied in server";
 			}
 			else{
 				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "unknown error from server");
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: unknown error from server";
+				LOG(ERROR)<<"unknown error from server";
 			}
 			sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
 			close(clientSocketFD);
@@ -270,7 +270,7 @@ void handleClient(ClientHandler curClient){
 		}
 	}
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid opcode";
+		LOG(ERROR)<<"invalid opcode";
 		packetSize  = 0;
 		packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "invalid opcode during internal processing");
 		sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
@@ -297,7 +297,7 @@ bool handleSendData(ClientHandler curClient, std::ifstream& fd){
 		int getNewPacket = true;
 		while(!allDataSent){
 			if(inValidTries > TFTP_RECEIVE_TRIES){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: lost connection";
+				LOG(ERROR)<<"lost connection";
 				return false;
 			}
 			bytesRead = 0;
@@ -307,19 +307,19 @@ bool handleSendData(ClientHandler curClient, std::ifstream& fd){
 			if(getNewPacket){
 				bytesRead = readData512(dataBuffer, sizeof(dataBuffer), fd);
 				if(bytesRead == -1){
-					LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file read error";
+					LOG(ERROR)<<"file read error";
 					return false;
 				}
 				curClient.blockNum++;
 			}
 			sendPacketSize = makeDataPacket(sendBuffer, sizeof(sendBuffer), curClient.blockNum, dataBuffer, bytesRead);
 			if(sendPacketSize == -1){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: unable to make data packet";
+				LOG(ERROR)<<"unable to make data packet";
 				return false;
 			}
 			ret = sendBufferThroughUDP(sendBuffer, sendPacketSize, curClient.clientSocket, curClient.clientAddress);
 			if(ret != sendPacketSize){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: packet send error";
+				LOG(ERROR)<<"packet send error";
 				return false;
 			}
 			ackStatus = getACK(curClient);
@@ -331,19 +331,19 @@ bool handleSendData(ClientHandler curClient, std::ifstream& fd){
 				}
 			}
 			else{
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Invalid ack, soft continue";
+				LOG(ERROR)<<"Invalid ack, soft continue";
 				getNewPacket = false;
 				inValidTries++;
 			}	
 		}
 		if(allDataSent){
-			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: all data sent to client";
+			LOG(INFO)<<"all data sent to client";
 			return true;
 		}
 		return false;
 	}
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file open error";
+		LOG(ERROR)<<"file open error";
 		return false;
 	}
 	return false;
@@ -371,66 +371,66 @@ bool handleReceiveData(ClientHandler curClient, std::ofstream& fd){
 			recvDataLen = 0;
 
 			if(inValidTries > TFTP_RECEIVE_TRIES){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: lost connection";
+				LOG(ERROR)<<"lost connection";
 				return false;
 			}
 			sendPacketSize = makeACKPacket(sendBuffer, sizeof(sendBuffer), curClient.blockNum);
 			if(sendPacketSize == -1){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: unable to make data packet";
+				LOG(ERROR)<<"unable to make data packet";
 				return false;
 			}
 			ret = sendBufferThroughUDP(sendBuffer, sendPacketSize, curClient.clientSocket, curClient.clientAddress);
 			if(ret != sendPacketSize){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: packet send error";
+				LOG(ERROR)<<"packet send error";
 				return false;
 			}
 
-			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: ACK "<<curClient.blockNum<<" sent to client";
+			LOG(DEBUG)<<"ACK "<<curClient.blockNum<<" sent to client";
 			
 			dataRecvStatus = getData(curClient, recvData, sizeof(recvData), recvDataLen);
 
 			if(dataRecvStatus){
 				ret = writeData512(recvData, recvDataLen, fd);
 				if(ret < 0){
-					LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file write error";
+					LOG(ERROR)<<"file write error";
 					return false;
 				}
 				curClient.blockNum++;
 				inValidTries = 0;
-				LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: receive data len: "<<recvDataLen<<" max:"<< TFTP_MAX_DATA_SIZE;
+				LOG(DEBUG)<< "receive data len: "<<recvDataLen<<" max:"<< TFTP_MAX_DATA_SIZE;
 				if(recvDataLen < TFTP_MAX_DATA_SIZE){
 					allDataReceived = true;
 				}
 			}
 			else{
 				inValidTries++;
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Invalid data, soft continue";
+				LOG(ERROR)<<"Invalid data, soft continue";
 			}
 		}
 		if(allDataReceived){
 			sendPacketSize = 0;
 			sendPacketSize = makeACKPacket(sendBuffer, sizeof(sendBuffer), curClient.blockNum);
 			if(sendPacketSize == -1){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: unable to make data packet";
+				LOG(ERROR)<<"unable to make data packet";
 				return false;
 			}
 			ret = sendBufferThroughUDP(sendBuffer, sendPacketSize, curClient.clientSocket, curClient.clientAddress);
 			if(ret != sendPacketSize){
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: packet send error";
+				LOG(ERROR)<<"packet send error";
 				return false;
 			}
 			std::chrono::seconds duration(2);
     		std::this_thread::sleep_for(duration);
-			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Sending file block ACK";
+			LOG(DEBUG)<<"Sending file block ACK";
 			return true;
 		}
 		else{
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Unexpected error";
+			LOG(ERROR)<<"Unexpected error";
 			return false;
 		}
 	}
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file open error";
+		LOG(ERROR)<<"file open error";
 		return false;
 	}
 	return false;
@@ -448,13 +448,13 @@ bool getACK(ClientHandler curClient){
 	struct sockaddr_in recvAddress;
 	ret = getBufferThroughUDP(recvBuffer, sizeof(recvBuffer), curClient.clientSocket, recvAddress);
 	if(ret == -1){
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: receive error";
+		LOG(ERROR)<<"receive error";
 		return false;
 	}
 
 	if(recvAddress.sin_addr.s_addr!=curClient.clientAddress.sin_addr.s_addr){ 
 		packetSize = 0;
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: packet from unknown host";
+		LOG(ERROR)<<"packet from unknown host";
 		packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NO_SUCH_USER, "you are a unknow user");
 		sendBufferThroughUDP(sendBuffer, packetSize, curClient.clientSocket, recvAddress);
 		return false;
@@ -462,14 +462,14 @@ bool getACK(ClientHandler curClient){
 
 	if(recvAddress.sin_port!=curClient.clientAddress.sin_port){
 		packetSize = 0;
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid TID";
+		LOG(ERROR)<<"invalid TID";
 		packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_UNKNOWN_TID, "you are a unknow user");
 		sendBufferThroughUDP(sendBuffer, packetSize, curClient.clientSocket, recvAddress);
 		return false;
 	}
 
 	if(ret < 4){
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid packet expected ACK paket of 4 bytes";
+		LOG(ERROR)<<"invalid packet expected ACK paket of 4 bytes";
 		return false;
 	}
 
@@ -478,7 +478,7 @@ bool getACK(ClientHandler curClient){
 	opcode = (uint16_t)(((recvBuffer[1] & 0xFF) << 8) | (recvBuffer[0] & 0XFF));
 	opcode = ntohs(opcode);
 	if(opcode != TFTP_OPCODE_ACK){
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid opcode expected ACK";
+		LOG(ERROR)<<"invalid opcode expected ACK";
 		return false;
 	}
 
@@ -487,10 +487,10 @@ bool getACK(ClientHandler curClient){
 	recvBlockNum = (uint16_t)(((recvBuffer[3] & 0xFF) << 8) | (recvBuffer[2] & 0XFF));
 	recvBlockNum = ntohs(recvBlockNum);
 	if(recvBlockNum != curClient.blockNum){
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid block number";
+		LOG(ERROR)<<"invalid block number";
 		return false;
 	}
-	LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Valid ACK Received block number: "<<recvBlockNum;
+	LOG(DEBUG)<<"Valid ACK Received block number: "<<recvBlockNum;
 	return true;
 }
 
@@ -508,15 +508,15 @@ bool getData(ClientHandler curClient, uint8_t* recvDataBuffer, size_t bufferSize
 		
 		struct sockaddr_in recvAddress;
 		ret = getBufferThroughUDP(recvBuffer, sizeof(recvBuffer), curClient.clientSocket, recvAddress);
-		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: receive buffer length "<<ret;
+		LOG(DEBUG)<<"receive buffer length "<<ret;
 		if(ret == -1){
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: receive error";
+			LOG(ERROR)<<"receive error";
 			return false;
 		}
 
 		if(recvAddress.sin_addr.s_addr!=curClient.clientAddress.sin_addr.s_addr){ 
 			packetSize = 0;
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: packet from unknown host";
+			LOG(ERROR)<<"packet from unknown host";
 			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NO_SUCH_USER, "you are a unknow user");
 			sendBufferThroughUDP(sendBuffer, packetSize, curClient.clientSocket, recvAddress);
 			return false;
@@ -524,14 +524,14 @@ bool getData(ClientHandler curClient, uint8_t* recvDataBuffer, size_t bufferSize
 
 		if(recvAddress.sin_port!=curClient.clientAddress.sin_port){
 			packetSize = 0;
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid TID";
+			LOG(ERROR)<<"invalid TID";
 			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_UNKNOWN_TID, "you are a unknow user");
 			sendBufferThroughUDP(sendBuffer, packetSize, curClient.clientSocket, recvAddress);
 			return false;
 		}
 
 		if(ret < 4){
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid packet expected data paket 4bytes or greater";
+			LOG(ERROR)<<"invalid packet expected data paket 4bytes or greater";
 			return false;
 		}
 
@@ -542,7 +542,7 @@ bool getData(ClientHandler curClient, uint8_t* recvDataBuffer, size_t bufferSize
 
 		// Verifying data opcode
 		if(opcode != TFTP_OPCODE_DATA){
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid opcode expected DATA";
+			LOG(ERROR)<<"invalid opcode expected DATA";
 			return false;
 		}
 
@@ -552,24 +552,24 @@ bool getData(ClientHandler curClient, uint8_t* recvDataBuffer, size_t bufferSize
 		recvBlockNum = ntohs(recvBlockNum);
 
 		if(recvBlockNum != curClient.blockNum + 1){
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid block number";
+			LOG(ERROR)<<"invalid block number";
 			return false;
 		}
 
 		dataLen = ret - 4;
 		if(dataLen > TFTP_MAX_DATA_SIZE){
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid data size";
+			LOG(ERROR)<<"invalid data size";
 			return false;
 		}
 		if(dataLen > 0){
 			memcpy(recvDataBuffer, recvBuffer + 4, dataLen);
 		}
 
-		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Valid Data Received block number: "<<recvBlockNum<<", Length: "<<dataLen;
+		LOG(DEBUG)<<"Valid Data Received block number: "<<recvBlockNum<<", Length: "<<dataLen;
 		return true;
 	}
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid funciton argument";
+		LOG(ERROR)<<"invalid funciton argument";
 		return false;
 	}
 	return false;

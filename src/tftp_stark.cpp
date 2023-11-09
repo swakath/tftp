@@ -118,7 +118,7 @@ std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCo
 				std::lock_guard<std::mutex> lock(mutexObj);
 				if (fileData.find(fileName) == fileData.end()){
 					fileData.insert({fileName, std::make_pair(0,true)});
-					LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in write mode and inserted in the map";
+					LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in write mode and inserted into map";
 					return fileWrite;
 				}
 				else{
