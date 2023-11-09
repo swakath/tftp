@@ -52,9 +52,14 @@ class ClientHandler {
 };
 
 bool getACK(ClientHandler curClient);
+bool getData(ClientHandler curClient, uint8_t* recvDataBuffer,size_t bufferSize, int& dataLen);
 void handleClient(ClientHandler curClient);
 void handleIncommingRequests(int serverSock);
 void handleServerTermination();
 bool handleSendData(ClientHandler curClient, std::ifstream& fd);
 bool handleReceiveData(ClientHandler curClient, std::ofstream& fd); 
 #endif
+
+
+
+

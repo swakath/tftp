@@ -121,12 +121,13 @@ int sendBufferThroughUDP(uint8_t* sendBuffer, size_t bufferLen, int socketfd, st
  * @brief function to read buffer length size of bytes from a UDP Socket receive buffer
 */
 int getBufferThroughUDP(uint8_t* recvBuffer, size_t bufferLen, int socketfd, struct sockaddr_in& clientAddress){
+	LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: recvBuffer Length: "<<bufferLen;
 	if(recvBuffer!=NULL && bufferLen > 0){
 		socklen_t clientAddressLength = sizeof(clientAddress);
 		int timoutCnt = 0;
 		while(timoutCnt < TFTP_MAX_TIMEOUT_TRIES){
-			memset(recvBuffer, 0, sizeof(recvBuffer));
-			ssize_t bytesReceived = recvfrom(socketfd, recvBuffer, sizeof(recvBuffer), 0, (struct sockaddr*)&clientAddress, &clientAddressLength);
+			memset(recvBuffer, 0, bufferLen);
+			ssize_t bytesReceived = recvfrom(socketfd, recvBuffer, bufferLen, 0, (struct sockaddr*)&clientAddress, &clientAddressLength);
 			if (bytesReceived == -1) {
 				if(errno == EWOULDBLOCK){
 					timoutCnt++;

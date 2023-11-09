@@ -151,7 +151,7 @@ int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
         int bytesRead;
         if(!fd.eof()){
             fd.read(reinterpret_cast<char*>(dataBuffer), bufferLen);
-            if(fd.bad()){
+            if(fd.fail()){
                 LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file read error";
                 return -1;
             }
@@ -166,6 +166,26 @@ int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
     }
     else{
         LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: input argument error";
+        return -1;
+    }
+    return -1;
+}
+
+/**
+ * @brief function writes maximum 512 bytes from a data buffer to a ofstream file 
+*/
+int writeData512(uint8_t* dataBuffer, size_t bufferLen, std::ofstream& fd){
+    if(dataBuffer!=NULL && bufferLen <= TFTP_MAX_DATA_SIZE && fd.is_open()){
+        fd.write(reinterpret_cast<char*>(dataBuffer), bufferLen);
+        if(fd.fail()){
+            LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file write error";
+            return -1;
+        }
+        LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file write success";
+        return 1;
+    }
+    else{
+        LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: input argument error"<<dataBuffer<<","<<bufferLen<<","<<fd.is_open();
         return -1;
     }
     return -1;
