@@ -152,20 +152,20 @@ int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
         if(!fd.eof()){
             fd.read(reinterpret_cast<char*>(dataBuffer), bufferLen);
             if(fd.fail()){
-                LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file read error";
+                LOG(ERROR)<<"file read error";
                 return -1;
             }
             bytesRead = static_cast<int>(fd.gcount());
-            LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg:"<<bytesRead<<" bytes read successful";
+            LOG(DEBUG)<<bytesRead<<" bytes read successful";
             return bytesRead;
         }
         else{
-            LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: eof retruned 0 bytes read successful";
+            LOG(DEBUG)<<"eof retruned 0 bytes read successful";
             return 0;
         }
     }
     else{
-        LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: input argument error";
+        LOG(ERROR)<<"Input argument error";
         return -1;
     }
     return -1;
@@ -178,14 +178,14 @@ int writeData512(uint8_t* dataBuffer, size_t bufferLen, std::ofstream& fd){
     if(dataBuffer!=NULL && bufferLen <= TFTP_MAX_DATA_SIZE && fd.is_open()){
         fd.write(reinterpret_cast<char*>(dataBuffer), bufferLen);
         if(fd.fail()){
-            LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file write error";
+            LOG(ERROR)<<"file write error";
             return -1;
         }
-        LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file write success";
+        LOG(DEBUG)<<"file write success";
         return 1;
     }
     else{
-        LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: input argument error"<<dataBuffer<<","<<bufferLen<<","<<fd.is_open();
+        LOG(ERROR)<<"Input argument error"<<dataBuffer<<","<<bufferLen<<","<<fd.is_open();
         return -1;
     }
     return -1;

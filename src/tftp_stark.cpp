@@ -35,17 +35,17 @@ bool STARK::isFileAvailable(std::string fileName){
 		std::string filePath = root_dir + fileName;
 		std::ifstream fileRead(filePath.c_str(), std::ios::binary);
 		if(fileRead.is_open()){
-			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file available in tftp root directroy";
+			LOG(DEBUG)<<"file available in tftp root directroy";
 			fileRead.close();
 			return true;
 		}else{
-			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file not available in tftp root directroy";
+			LOG(DEBUG)<<"file not available in tftp root directroy";
 			fileRead.close();
 			return false;
 		}
 	}
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: empty file name";
+		LOG(ERROR)<<"empty file name";
 		return false;
 	}
 	return false;
@@ -57,21 +57,21 @@ bool STARK::isFileAvailable(std::string fileName){
 std::ifstream STARK::isFileReadable(std::string fileName, TftpErrorCode& errorCode){
 	errorCode = TFTP_ERROR_ACCESS_VIOLATION;
 	if(!fileName.empty()){
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: stark processing read for file name:"<<fileName;
+		LOG(INFO)<<"stark processing read for file name:"<<fileName;
 		std::string filePath = root_dir + fileName;
-		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<filePath;
+		LOG(DEBUG)<<"file name:"<<filePath;
 		std::ifstream fd(filePath.c_str(),  std::ios::binary);
 		if(fd.is_open()){
 			std::lock_guard<std::mutex> lock(mutexObj);
 			if (fileData.find(fileName) != fileData.end()){
 				if(fileData[fileName].second == false){
 					int readerCnt = fileData[fileName].first;
-					LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in read mode and reader cnt incremented"<<readerCnt+1;
+					LOG(INFO)<<"file opened in read mode and reader cnt incremented"<<readerCnt+1;
 					fileData[fileName].first = readerCnt + 1; 
 					return fd;
 				}
 				else{
-					LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file already opened in write mode. Wait until freed";	
+					LOG(ERROR)<<"file already opened in write mode. Wait until freed";	
 					errorCode = TFTP_ERROR_ACCESS_VIOLATION;
 					fd.close();
 					return std::ifstream();
@@ -79,19 +79,19 @@ std::ifstream STARK::isFileReadable(std::string fileName, TftpErrorCode& errorCo
 			}
 			else{
 				fileData.insert({fileName, std::make_pair(1,false)});
-				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in read mode and inserted in the map";
+				LOG(INFO)<<"file opened in read mode and inserted in the map";
 				return fd;
 			}
 		}
 		else{
 			fd.close();
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file not found";
+			LOG(ERROR)<<"file not found";
 			errorCode = TFTP_ERROR_FILE_NOT_FOUND;
 			return std::ifstream();
 		}
 	}
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL";
+		LOG(ERROR)<<"file name is NULL";
 		return std::ifstream();
 	}
 	return std::ifstream();
@@ -104,11 +104,11 @@ std::ifstream STARK::isFileReadable(std::string fileName, TftpErrorCode& errorCo
 std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCode){
 	errorCode = TFTP_ERROR_ACCESS_VIOLATION;
 	if(!fileName.empty()){
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<fileName;
+		LOG(INFO)<<"file name:"<<fileName;
 		std::string filePath = root_dir + fileName;
-		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<filePath;
+		LOG(DEBUG)<<"file name:"<<filePath;
 		if(this->isFileAvailable(fileName)){
-			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file already exists";
+			LOG(ERROR)<<"file already exists";
 			errorCode = TFTP_ERROR_FILE_ALREADY_EXISTS;
 			return std::ofstream();
 		}
@@ -118,11 +118,11 @@ std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCo
 				std::lock_guard<std::mutex> lock(mutexObj);
 				if (fileData.find(fileName) == fileData.end()){
 					fileData.insert({fileName, std::make_pair(0,true)});
-					LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file opened in write mode and inserted into map";
+					LOG(INFO)<<"file opened in write mode and inserted into map";
 					return fileWrite;
 				}
 				else{
-					LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file not in directory but present in map.";
+					LOG(FATAL)<<"file not in directory but present in map.";
 					errorCode = TFTP_ERROR_NOT_DEFINED;
 					fileWrite.close();
 					return std::ofstream();
@@ -130,14 +130,14 @@ std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCo
 			}
 			else{
 				fileWrite.close();
-				LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: unable to open file in write mode";
+				LOG(ERROR)<<"unable to open file in write mode";
 				errorCode = TFTP_ERROR_ACCESS_VIOLATION;
 				return std::ofstream();
 			}
 		}
 	}
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL";
+		LOG(ERROR)<<"file name is NULL";
 		return std::ofstream();
 	}
 	return std::ofstream();
@@ -157,21 +157,21 @@ bool STARK::closeReadableFile(std::string fileName, std::ifstream& fd){
 			if(readCnt > 0){
 				readCnt--;
 				fileData[fileName].first = readCnt;
-                LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file closed successfully";
+                LOG(DEBUG)<<"file closed successfully";
                 return true;
 			}
 			else{
-				LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file open but read cnt already zero";
+				LOG(FATAL)<<"file open but read cnt already zero";
 				return false;
 			}	
 		}
 		else{
-			LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: read file open but not in list";
+			LOG(FATAL)<<"read file open but not in list";
 			return false;
 		}
 	} 
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL  or file as already closed name:" <<fileName;
+		LOG(ERROR)<<"file name is NULL  or file as already closed name:" <<fileName;
 		return false;
 	}
     return false;
@@ -190,21 +190,21 @@ bool STARK::closeWritableFile(std::string fileName, std::ofstream& fd){
 			if(writeStatus == true){
 				writeStatus = false;
 				fileData[fileName].second = writeStatus;
-                LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file closed successfully";
+                LOG(DEBUG)<<"file closed successfully";
                 return true;
 			}
 			else{
-				LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: wrte file open but write status already false";
+				LOG(FATAL)<<"wrte file open but write status already false";
 				return false;
 			}	
 		}
 		else{
-			LOG(FATAL)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file open but not in list";
+			LOG(FATAL)<<"file open but not in list";
 			return false;
 		}
 	} 
 	else{
-		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name is NULL  or file as already closed name:" <<fileName;
+		LOG(ERROR)<<"file name is NULL  or file as already closed name:" <<fileName;
 		return false;
 	}
     return true;
