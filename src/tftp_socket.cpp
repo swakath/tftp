@@ -24,7 +24,7 @@ int createUDPSocket(const char* socketIP, int socketPORT, int timeOut){
 
     // checking if the socket creation succeeded
     if(sockfd == -1){
-        LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Error creating socket: "<< strerror(errno)<<" for port "<<socketPORT;
+        LOG(ERROR)<<"Error creating socket: "<< strerror(errno)<<" for port "<<socketPORT;
 		return -1;
     }
 
@@ -32,7 +32,7 @@ int createUDPSocket(const char* socketIP, int socketPORT, int timeOut){
     timeout.tv_sec = timeOut; // 5 seconds
     timeout.tv_usec = 0;
     if (setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Failed to set read timeout." << std::endl;
+        LOG(ERROR)<<"Failed to set read timeout." << std::endl;
         return -1;
     }
 
@@ -43,7 +43,7 @@ int createUDPSocket(const char* socketIP, int socketPORT, int timeOut){
 	serv_addr.sin_family = AF_INET;  // using IPv4 address family
 
 	if (inet_pton(AF_INET, socketIP, &(serv_addr.sin_addr.s_addr)) !=1) {
-        LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Error converting IP address: " << strerror(errno)<<" for port "<<socketPORT;;
+        LOG(ERROR)<<"Error converting IP address: " << strerror(errno)<<" for port "<<socketPORT;;
         return -1;
     }
 
@@ -54,7 +54,7 @@ int createUDPSocket(const char* socketIP, int socketPORT, int timeOut){
 
     // checking if the socket bind succeeded
     if(bound == -1){
-        LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Error binding socket: "<< strerror(errno)<<" for port "<<socketPORT;;
+        LOG(ERROR)<<"Error binding socket: "<< strerror(errno)<<" for port "<<socketPORT;;
         close(sockfd);
         return -1;
     }
@@ -65,7 +65,7 @@ int createUDPSocket(const char* socketIP, int socketPORT, int timeOut){
      
 	//Debug messages
 	sprintf(log_message, "New Socket Created: IP [%s] Port [%d]", ip, ntohs(serv_addr.sin_port));
-	LOG(DEBUG)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: "<< log_message;
+	LOG(DEBUG)<<""<< log_message;
 	return sockfd;
 }
 
@@ -89,6 +89,7 @@ int createRandomUDPSocket(const char* socketIP, int* randomPort){
 		return -1;
 	}
 	else {
+		LOG(ERROR)<<"Input parameter error";
 		return -1;
 	}
 }
@@ -102,17 +103,20 @@ int sendBufferThroughUDP(uint8_t* sendBuffer, size_t bufferLen, int socketfd, st
 		socklen_t clientAddressLength = sizeof(clientAddress);
 		sendLen = sendto(socketfd, sendBuffer, bufferLen, 0, (struct sockaddr*)&clientAddress, clientAddressLength);
 		if(sendLen == -1){
-			LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Data not send";
+			LOG(ERROR)<<"Data not send";
 			return -1;
 		}
 		else if(sendLen != bufferLen){
-			LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Full buffer not sent";
+			LOG(ERROR)<<"Full buffer not sent";
 			return -1;
 		}
 		else{
-			LOG(DEBUG)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Packet sent successfully";
+			LOG(DEBUG)<<"Packet sent successfully";
 			return sendLen;
 		}
+	}else{
+		LOG(ERROR)<<"Input parameter error";
+		return -1;
 	}
 	return -1;
 }
@@ -121,7 +125,7 @@ int sendBufferThroughUDP(uint8_t* sendBuffer, size_t bufferLen, int socketfd, st
  * @brief function to read buffer length size of bytes from a UDP Socket receive buffer
 */
 int getBufferThroughUDP(uint8_t* recvBuffer, size_t bufferLen, int socketfd, struct sockaddr_in& clientAddress){
-	LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: recvBuffer Length: "<<bufferLen;
+	LOG(DEBUG)<<"recvBuffer Length: "<<bufferLen;
 	if(recvBuffer!=NULL && bufferLen > 0){
 		socklen_t clientAddressLength = sizeof(clientAddress);
 		int timoutCnt = 0;
@@ -131,25 +135,25 @@ int getBufferThroughUDP(uint8_t* recvBuffer, size_t bufferLen, int socketfd, str
 			if (bytesReceived == -1) {
 				if(errno == EWOULDBLOCK){
 					timoutCnt++;
-					LOG(ERROR) <<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: timout occured count: "<<timoutCnt;
+					LOG(ERROR)<<"timout occured count: "<<timoutCnt;
 				}
 				else{	
-					LOG(ERROR) <<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Error receiving data "<<strerror(errno);
+					LOG(ERROR)<<"Error receiving data "<<strerror(errno);
 					return -1;
 				}
 			}
 			else{
-				LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
+				LOG(DEBUG)<<"Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
 				return (int)bytesReceived;
 			}
 		}
 		if(timoutCnt >= TFTP_MAX_TIMEOUT_TRIES){
-			LOG(ERROR) <<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: MAX timeout occured";
+			LOG(ERROR)<<"MAX timeout occured";
 			return -1;
 		}
 	}
 	else{
-		LOG(ERROR)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<" msg: input parameter error";
+		LOG(ERROR)<<"Input parameter error";
 		return -1;
 	}
 	return -1;
