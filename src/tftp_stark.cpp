@@ -27,13 +27,37 @@ void STARK::setRootDir(const char* directory){
 }
 
 /**
+ * @brief function to check if file is available in the TFTP root directory
+*/
+
+bool STARK::isFileAvailable(std::string fileName){
+	if(!fileName.empty()){
+		std::string filePath = root_dir + fileName;
+		std::ifstream fileRead(filePath.c_str(), std::ios::binary);
+		if(fileRead.is_open()){
+			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file available in tftp root directroy";
+			fileRead.close();
+			return true;
+		}else{
+			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file not available in tftp root directroy";
+			fileRead.close();
+			return false;
+		}
+	}
+	else{
+		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: empty file name";
+		return false;
+	}
+	return false;
+}
+/**
  * @brief function to check if a file is having read permission
  * opens the file in read more if the permission exists and return the file object
 */
 std::ifstream STARK::isFileReadable(std::string fileName, TftpErrorCode& errorCode){
 	errorCode = TFTP_ERROR_ACCESS_VIOLATION;
 	if(!fileName.empty()){
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<fileName;
+		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: stark processing read for file name:"<<fileName;
 		std::string filePath = root_dir + fileName;
 		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<filePath;
 		std::ifstream fd(filePath.c_str(),  std::ios::binary);
@@ -83,15 +107,12 @@ std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCo
 		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<fileName;
 		std::string filePath = root_dir + fileName;
 		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file name:"<<filePath;
-		std::ifstream fileRead(filePath.c_str(), std::ios::binary);
-		if(fileRead.is_open()){
+		if(this->isFileAvailable(fileName)){
 			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file already exists";
 			errorCode = TFTP_ERROR_FILE_ALREADY_EXISTS;
-			fileRead.close();
 			return std::ofstream();
 		}
 		else{
-			fileRead.close();
 			std::ofstream fileWrite(filePath.c_str(), std::ios::binary);
 			if(fileWrite.is_open()){
 				std::lock_guard<std::mutex> lock(mutexObj);
@@ -136,7 +157,7 @@ bool STARK::closeReadableFile(std::string fileName, std::ifstream& fd){
 			if(readCnt > 0){
 				readCnt--;
 				fileData[fileName].first = readCnt;
-                LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file closed successfully";
+                LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file closed successfully";
                 return true;
 			}
 			else{
@@ -169,7 +190,7 @@ bool STARK::closeWritableFile(std::string fileName, std::ofstream& fd){
 			if(writeStatus == true){
 				writeStatus = false;
 				fileData[fileName].second = writeStatus;
-                LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file closed successfully";
+                LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: file closed successfully";
                 return true;
 			}
 			else{

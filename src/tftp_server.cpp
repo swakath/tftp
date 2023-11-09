@@ -46,7 +46,7 @@ ClientHandler::ClientHandler(int defaultServerSocket, sockaddr_in clientAddress,
 void ClientHandler::printVals(){
 	memset(log_message,0,sizeof(log_message));
 	sprintf(log_message, "Client Obj Vals: IP[%s] Port[%d] fileName[%s] mode[%s]", inet_ntoa(clientAddress.sin_addr), ntohs(clientAddress.sin_port), requestFileName.c_str(), operationMode);
-	LOG(INFO) << log_message;
+	LOG(DEBUG) << log_message;
 	return;
 }
 
@@ -76,7 +76,7 @@ void handleIncommingRequests(int serverSock){
             continue;
         }
 
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
+		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
 		
 		// Checking sanity of recvBuffer
 		if(sizeof(recvBuffer) <= TFTP_MIN_CONN_INIT_PACKET_SIZE*sizeof(uint8_t)){
@@ -91,7 +91,7 @@ void handleIncommingRequests(int serverSock){
 		// retriving opcode
 		opcode = (uint16_t)(((recvBuffer[1] & 0xFF) << 8) | (recvBuffer[0] & 0XFF));
 		sprintf(log_message, "recv [%X][%X] raw opcode [%X]", recvBuffer[0], recvBuffer[1], opcode);
-		LOG(INFO)<<log_message;	
+		LOG(DEBUG)<<log_message;	
 		opcode = ntohs(opcode);
 
 		if(opcode!=TFTP_OPCODE_RRQ && opcode!=TFTP_OPCODE_WRQ){
@@ -181,7 +181,7 @@ void handleClient(ClientHandler curClient){
 		TftpErrorCode errorCode; 
 		fd = STARK::getInstance().isFileReadable(curClient.requestFileName, errorCode);
 		if(fd.is_open()){
-			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Open Success";
+			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: File Open Success";
 			bool ret;
 			ret = handleSendData(curClient, fd);
 			if(ret){
@@ -385,7 +385,7 @@ bool handleReceiveData(ClientHandler curClient, std::ofstream& fd){
 				return false;
 			}
 
-			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: ACK "<<curClient.blockNum<<" sent to client";
+			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: ACK "<<curClient.blockNum<<" sent to client";
 			
 			dataRecvStatus = getData(curClient, recvData, sizeof(recvData), recvDataLen);
 
@@ -421,7 +421,7 @@ bool handleReceiveData(ClientHandler curClient, std::ofstream& fd){
 			}
 			std::chrono::seconds duration(2);
     		std::this_thread::sleep_for(duration);
-			LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Sending file block ACK";
+			LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Sending file block ACK";
 			return true;
 		}
 		else{
@@ -490,7 +490,7 @@ bool getACK(ClientHandler curClient){
 		LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: invalid block number";
 		return false;
 	}
-	LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Valid ACK Received block number: "<<recvBlockNum;
+	LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Valid ACK Received block number: "<<recvBlockNum;
 	return true;
 }
 
@@ -508,7 +508,7 @@ bool getData(ClientHandler curClient, uint8_t* recvDataBuffer, size_t bufferSize
 		
 		struct sockaddr_in recvAddress;
 		ret = getBufferThroughUDP(recvBuffer, sizeof(recvBuffer), curClient.clientSocket, recvAddress);
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: receive buffer length "<<ret;
+		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: receive buffer length "<<ret;
 		if(ret == -1){
 			LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: receive error";
 			return false;
@@ -565,7 +565,7 @@ bool getData(ClientHandler curClient, uint8_t* recvDataBuffer, size_t bufferSize
 			memcpy(recvDataBuffer, recvBuffer + 4, dataLen);
 		}
 
-		LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Valid Data Received block number: "<<recvBlockNum<<", Length: "<<dataLen;
+		LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<", msg: Valid Data Received block number: "<<recvBlockNum<<", Length: "<<dataLen;
 		return true;
 	}
 	else{

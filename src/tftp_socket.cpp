@@ -65,7 +65,7 @@ int createUDPSocket(const char* socketIP, int socketPORT, int timeOut){
      
 	//Debug messages
 	sprintf(log_message, "New Socket Created: IP [%s] Port [%d]", ip, ntohs(serv_addr.sin_port));
-	LOG(INFO)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: "<< log_message;
+	LOG(DEBUG)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: "<< log_message;
 	return sockfd;
 }
 
@@ -110,7 +110,7 @@ int sendBufferThroughUDP(uint8_t* sendBuffer, size_t bufferLen, int socketfd, st
 			return -1;
 		}
 		else{
-			LOG(INFO)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Packet sent successfully";
+			LOG(DEBUG)<<"Function: "<<__FUNCTION__<<" Line:"<<__LINE__<<",msg: Packet sent successfully";
 			return sendLen;
 		}
 	}
@@ -139,7 +139,7 @@ int getBufferThroughUDP(uint8_t* recvBuffer, size_t bufferLen, int socketfd, str
 				}
 			}
 			else{
-				LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
+				LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<< ", msg: Received " << bytesReceived << " bytes from " << inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port) << " - Data:" << recvBuffer ;
 				return (int)bytesReceived;
 			}
 		}

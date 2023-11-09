@@ -32,10 +32,12 @@ class STARK : public Singleton<STARK> {
         std::string root_dir;
         std::unordered_map<std::string, std::pair<int, bool>> fileData;
         void setRootDir(const char* directory);
+        bool isFileAvailable(std::string fileName);
         std::ifstream isFileReadable(std::string fileName, TftpErrorCode& errorCode);
         std::ofstream isFileWritable(std::string fileName, TftpErrorCode& errorCode);
         bool closeReadableFile(std::string fileName, std::ifstream& fd);
         bool closeWritableFile(std::string fileName, std::ofstream& fd);
+        
 };
 
 #endif

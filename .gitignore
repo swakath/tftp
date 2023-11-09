@@ -34,6 +34,8 @@
 # Build Directory
 build/
 
+# Debug Directory
+debug/
 # VSCode Related Files
 .vscode/*
 !.vscode/settings.json

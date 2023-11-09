@@ -106,7 +106,7 @@ int makeACKPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t blockNum){
 }
 
 /**
- * @brief function accepts Block and Data Info and generates a TFTP Data packet
+ * @brief function accepts Block number and Data buffer and generates a TFTP Data packet
 */
 int makeDataPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t blockNum, uint8_t* data, size_t dataLen){
     int indx = 0;
@@ -142,7 +142,7 @@ int makeDataPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t blockNum, uin
 }
 
 /**
- * @brief function reads maximum 512 bytes of data from a ifstream file are copies the info into a buffer 
+ * @brief function reads maximum 512 bytes of data from a ifstream file are copies the data into a buffer 
 */
 
 int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
@@ -156,11 +156,11 @@ int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
                 return -1;
             }
             bytesRead = static_cast<int>(fd.gcount());
-            LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg:"<<bytesRead<<" bytes read successful";
+            LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg:"<<bytesRead<<" bytes read successful";
             return bytesRead;
         }
         else{
-            LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: eof retruned 0 bytes read successful";
+            LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: eof retruned 0 bytes read successful";
             return 0;
         }
     }
@@ -181,7 +181,7 @@ int writeData512(uint8_t* dataBuffer, size_t bufferLen, std::ofstream& fd){
             LOG(ERROR)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file write error";
             return -1;
         }
-        LOG(INFO)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file write success";
+        LOG(DEBUG)<<"Function:"<<__FUNCTION__<<", Line:"<<__LINE__<<",msg: file write success";
         return 1;
     }
     else{
