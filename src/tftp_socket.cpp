@@ -163,11 +163,11 @@ int getBufferThroughUDP(uint8_t* recvBuffer, size_t bufferLen, int socketfd, str
 /**
  * @brief function to handle receiveing ACK from a TFTP Client
 */
-bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum){
+bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, bool& recvError){
 	uint8_t recvBuffer[TFTP_MAX_PACKET_SIZE];
 	uint8_t sendBuffer[TFTP_MAX_PACKET_SIZE];
 	int packetSize;
-	
+	recvError = false;
 	int ret = 0;
 	struct sockaddr_in recvAddress;
 	ret = getBufferThroughUDP(recvBuffer, sizeof(recvBuffer), clientSocket, recvAddress);
@@ -201,30 +201,48 @@ bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expecte
 	// retriving opcode
 	opcode = (uint16_t)(((recvBuffer[1] & 0xFF) << 8) | (recvBuffer[0] & 0XFF));
 	opcode = ntohs(opcode);
-	if(opcode != TFTP_OPCODE_ACK){
-		LOG(ERROR)<<"invalid opcode expected ACK";
-		return false;
-	}
+	
+	if(opcode == TFTP_OPCODE_ACK){
+		recvError = false;
+		uint16_t recvBlockNum = 0;
+		// retriving block number
+		recvBlockNum = (uint16_t)(((recvBuffer[3] & 0xFF) << 8) | (recvBuffer[2] & 0XFF));
+		recvBlockNum = ntohs(recvBlockNum);
+		if(recvBlockNum != expectedBlockNum){
+			LOG(ERROR)<<"invalid block number";
+			return false;
+		}
 
-	uint16_t recvBlockNum = 0;
-	// retriving block number
-	recvBlockNum = (uint16_t)(((recvBuffer[3] & 0xFF) << 8) | (recvBuffer[2] & 0XFF));
-	recvBlockNum = ntohs(recvBlockNum);
-	if(recvBlockNum != expectedBlockNum){
-		LOG(ERROR)<<"invalid block number";
+		LOG(DEBUG)<<"Valid ACK Received block number: "<<recvBlockNum;
+		return true;
+	}
+	else if(opcode == TFTP_OPCODE_ERROR){
+		recvError = true;
+		uint16_t errorCode = 0;
+		// retriving error code number
+		errorCode = (uint16_t)(((recvBuffer[3] & 0xFF) << 8) | (recvBuffer[2] & 0XFF));
+		errorCode = ntohs(errorCode);
+		char errMsg[TFTP_MAX_PACKET_SIZE];
+		strcpy(errMsg, (char*)recvBuffer+4);
+		LOG(ERROR)<<"Received Error from client opcode:"<<opcode<<", error code:"<<errorCode<<", error message:"<<errMsg;
 		return false;
 	}
-	LOG(DEBUG)<<"Valid ACK Received block number: "<<recvBlockNum;
-	return true;
+	else{
+		LOG(ERROR)<<"invalid opcode expected ACK/ERROR";
+		return false;
+	}
+	LOG(ERROR)<<"Open condition";
+	return false;
 }
 
 /**
  * @brief receives TFTP data packet from specified client socket
 */
-bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, uint8_t* recvDataBuffer, size_t bufferSize, int& dataLen){
+bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, uint8_t* recvDataBuffer, size_t bufferSize, int& dataLen, bool& recvError){
 	uint8_t recvBuffer[TFTP_MAX_PACKET_SIZE];
 	uint8_t sendBuffer[TFTP_MAX_PACKET_SIZE];
 	int packetSize = 0;
+	recvError = false;
 	if(recvDataBuffer!=NULL){
 		memset(recvDataBuffer,0,bufferSize);
 		dataLen = 0;
@@ -263,37 +281,48 @@ bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expect
 		opcode = (uint16_t)(((recvBuffer[1] & 0xFF) << 8) | (recvBuffer[0] & 0XFF));
 		opcode = ntohs(opcode);
 
-		// Verifying data opcode
-		if(opcode != TFTP_OPCODE_DATA){
-			LOG(ERROR)<<"invalid opcode expected DATA";
+		if(opcode == TFTP_OPCODE_DATA){
+			recvError = false;
+			uint16_t recvBlockNum = 0;
+			// retriving block number
+			recvBlockNum = (uint16_t)(((recvBuffer[3] & 0xFF) << 8) | (recvBuffer[2] & 0XFF));
+			recvBlockNum = ntohs(recvBlockNum);
+			if(recvBlockNum != expectedBlockNum){
+				LOG(ERROR)<<"invalid block number"<<", received:"<<recvBlockNum<<", expected:"<<expectedBlockNum;
+				return false;
+			}
+			dataLen = ret - 4;
+			if(dataLen > TFTP_MAX_DATA_SIZE){
+				LOG(ERROR)<<"invalid data size";
+				return false;
+			}
+			if(dataLen > 0){
+				memcpy(recvDataBuffer, recvBuffer + 4, dataLen);
+			}
+			LOG(DEBUG)<<"Valid Data Received block number: "<<recvBlockNum<<", Length: "<<dataLen;
+			return true;
+		}
+		else if(opcode == TFTP_OPCODE_ERROR){
+			recvError = true;
+			uint16_t errorCode = 0;
+			// retriving error code number
+			errorCode = (uint16_t)(((recvBuffer[3] & 0xFF) << 8) | (recvBuffer[2] & 0XFF));
+			errorCode = ntohs(errorCode);
+			char errMsg[TFTP_MAX_PACKET_SIZE];
+			strcpy(errMsg, (char*)recvBuffer+4);
+			LOG(ERROR)<<"Received Error from client opcode:"<<opcode<<", error code:"<<errorCode<<", error message:"<<errMsg;
 			return false;
 		}
-
-		uint16_t recvBlockNum = 0;
-		// retriving block number
-		recvBlockNum = (uint16_t)(((recvBuffer[3] & 0xFF) << 8) | (recvBuffer[2] & 0XFF));
-		recvBlockNum = ntohs(recvBlockNum);
-
-		if(recvBlockNum != expectedBlockNum){
-			LOG(ERROR)<<"invalid block number"<<", received:"<<recvBlockNum<<", expected:"<<expectedBlockNum;
+		else{
+			recvError = false;
+			LOG(ERROR)<<"invalid opcode expected DATA/ERROR";
 			return false;
 		}
-
-		dataLen = ret - 4;
-		if(dataLen > TFTP_MAX_DATA_SIZE){
-			LOG(ERROR)<<"invalid data size";
-			return false;
-		}
-		if(dataLen > 0){
-			memcpy(recvDataBuffer, recvBuffer + 4, dataLen);
-		}
-
-		LOG(DEBUG)<<"Valid Data Received block number: "<<recvBlockNum<<", Length: "<<dataLen;
-		return true;
 	}
 	else{
 		LOG(ERROR)<<"invalid funciton argument";
 		return false;
 	}
+	LOG(ERROR)<<"Open condition";
 	return false;
 }

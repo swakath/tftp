@@ -31,6 +31,6 @@ int createUDPSocket(const char* socketIP, int socketPORT, int timeOut = TFTP_UDP
 int createRandomUDPSocket(const char* socketIP, int* randomPort);
 int sendBufferThroughUDP(uint8_t* sendBuffer, size_t bufferLen, int socketfd, struct sockaddr_in clientAddress);
 int getBufferThroughUDP(uint8_t* recvBuffer, size_t bufferLen, int socketfd, struct sockaddr_in& clientAddress);
-bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum);
-bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, uint8_t* recvDataBuffer, size_t bufferSize, int& dataLen);
+bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, bool& recvError);
+bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, uint8_t* recvDataBuffer, size_t bufferSize, int& dataLen, bool& recvError);
 #endif

@@ -295,6 +295,7 @@ bool handleSendData(ClientHandler curClient, std::ifstream& fd){
 		bool ackStatus = false;
 		int inValidTries = 0;
 		int getNewPacket = true;
+		bool isErrorPktReceived = false;
 		while(!allDataSent){
 			if(inValidTries > TFTP_RECEIVE_TRIES){
 				LOG(ERROR)<<"lost connection";
@@ -303,6 +304,7 @@ bool handleSendData(ClientHandler curClient, std::ifstream& fd){
 			ret = 0;
 			sendPacketSize = 0;
 			ackStatus = false;
+			isErrorPktReceived = false;
 			if(getNewPacket){
 				bytesRead = 0;
 				bytesRead = readData512(dataBuffer, sizeof(dataBuffer), fd);
@@ -324,19 +326,27 @@ bool handleSendData(ClientHandler curClient, std::ifstream& fd){
 				return false;
 			}
 			LOG(DEBUG)<<"Data packet sent successfully";
-			ackStatus = getACK(curClient.clientSocket, curClient.clientAddress, curClient.blockNum);
+			ackStatus = getACK(curClient.clientSocket, curClient.clientAddress, curClient.blockNum, isErrorPktReceived);
 			if(ackStatus){
 				LOG(DEBUG)<<"Valid ACK received";
 				inValidTries = 0;
 				getNewPacket = true;
-				if(bytesRead < TFTP_MAX_DATA_SIZE){
+				LOG(DEBUG)<<"Bytes read and sent: "<<bytesRead;
+				if(bytesRead < TFTP_MAX_DATA_SIZE || fd.eof()){
+					LOG(DEBUG)<<"All data sent";
 					allDataSent = true;
 				}
 			}
 			else{
-				LOG(ERROR)<<"Invalid ack, soft continue";
-				getNewPacket = false;
-				inValidTries++;
+				if(!isErrorPktReceived){
+					LOG(ERROR)<<"Invalid ack, soft continue";
+					getNewPacket = false;
+					inValidTries++;
+				}
+				else{
+					LOG(ERROR)<<"Error received from client. Terminating transfer";
+					return false;
+				}
 			}	
 		}
 		if(allDataSent){
@@ -367,11 +377,13 @@ bool handleReceiveData(ClientHandler curClient, std::ofstream& fd){
 		bool dataRecvStatus = false;
 		int recvDataLen = 0;
 		int inValidTries = 0;
+		bool isErrorPktReceived;
 		while(!allDataReceived){
 			sendPacketSize = 0;
 			ret = 0;
 			dataRecvStatus = false;
 			recvDataLen = 0;
+			isErrorPktReceived = false;
 
 			if(inValidTries > TFTP_RECEIVE_TRIES){
 				LOG(ERROR)<<"lost connection";
@@ -387,10 +399,9 @@ bool handleReceiveData(ClientHandler curClient, std::ofstream& fd){
 				LOG(ERROR)<<"packet send error";
 				return false;
 			}
-
 			LOG(DEBUG)<<"ACK "<<curClient.blockNum<<" sent to client";
-			
-			dataRecvStatus = getData(curClient.clientSocket,curClient.clientAddress, curClient.blockNum+1, recvData, sizeof(recvData), recvDataLen);
+	
+			dataRecvStatus = getData(curClient.clientSocket,curClient.clientAddress, curClient.blockNum+1, recvData, sizeof(recvData), recvDataLen, isErrorPktReceived);
 
 			if(dataRecvStatus){
 				ret = writeData512(recvData, recvDataLen, fd);
@@ -406,8 +417,14 @@ bool handleReceiveData(ClientHandler curClient, std::ofstream& fd){
 				}
 			}
 			else{
-				inValidTries++;
-				LOG(ERROR)<<"Invalid data, soft continue";
+				if(!isErrorPktReceived){
+					inValidTries++;
+					LOG(ERROR)<<"Invalid data, soft continue";
+				}
+				else{
+					LOG(ERROR)<<"Error received from client. Terminating transfer";
+					return false;
+				}
 			}
 		}
 		if(allDataReceived){

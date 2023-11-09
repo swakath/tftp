@@ -148,16 +148,23 @@ int makeDataPacket(uint8_t* sendBuffer, size_t bufferLen, uint16_t blockNum, uin
 int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
     if(dataBuffer!=NULL && bufferLen >= TFTP_MAX_DATA_SIZE && fd.is_open()){
         memset(dataBuffer, 0, bufferLen);
-        int bytesRead;
+        int bytesRead = 0;
         // Checking if fd had not reached end of file
         if(!fd.eof()){
             // Try reading TFTP_MAX_DATA_SIZE bytes from the buffer
             fd.read(reinterpret_cast<char*>(dataBuffer), bufferLen);
-            if(fd.fail()){
-                LOG(ERROR)<<"file read error";
-                return -1;
-            }
             bytesRead = static_cast<int>(fd.gcount());
+            if(fd.fail()){
+                if(fd.eof()){
+                    LOG(DEBUG)<<"eof retruned 0 bytes read successful"<<bytesRead;
+                    return bytesRead;
+                }
+                else{
+                    LOG(ERROR)<<"file read error";
+                    return -1;
+                }
+            }
+            
             LOG(DEBUG)<<bytesRead<<" bytes read successful";
             return bytesRead;
         }
