@@ -149,7 +149,9 @@ int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
     if(dataBuffer!=NULL && bufferLen >= TFTP_MAX_DATA_SIZE && fd.is_open()){
         memset(dataBuffer, 0, bufferLen);
         int bytesRead;
+        // Checking if fd had not reached end of file
         if(!fd.eof()){
+            // Try reading TFTP_MAX_DATA_SIZE bytes from the buffer
             fd.read(reinterpret_cast<char*>(dataBuffer), bufferLen);
             if(fd.fail()){
                 LOG(ERROR)<<"file read error";
@@ -159,6 +161,7 @@ int readData512(uint8_t* dataBuffer, size_t bufferLen, std::ifstream& fd){
             LOG(DEBUG)<<bytesRead<<" bytes read successful";
             return bytesRead;
         }
+        // If end of file is reached are read no bytes and return zero
         else{
             LOG(DEBUG)<<"eof retruned 0 bytes read successful";
             return 0;
