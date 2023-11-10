@@ -47,7 +47,7 @@ int makeErrorPacket(uint8_t* sendBuffer, size_t bufferLen, TftpErrorCode errorCo
 */
 int makeComInitPacket(TftpOpcode opcode, uint8_t* sendBuffer, size_t bufferLen, const char* fileName, const char* mode){
     int indx = 0;
-    if((sendBuffer != NULL) && (fileName != NULL) && (mode != NULL) && (opcode == TFTP_OPCODE_RRQ || opcode == TFTP_OPCODE_WRQ)){
+    if((sendBuffer != NULL) && (fileName != NULL) && (mode != NULL) && (opcode == TFTP_OPCODE_RRQ || opcode == TFTP_OPCODE_WRQ || opcode == TFTP_OPCODE_DEL)){
         size_t fileNameLen = strlen(fileName);
         size_t modeLen = strlen(fileName);
         // Send Buffer underflow condition verification

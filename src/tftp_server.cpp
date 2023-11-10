@@ -94,7 +94,7 @@ void handleIncommingRequests(int serverSock){
 		LOG(DEBUG)<<log_message;	
 		opcode = ntohs(opcode);
 
-		if(opcode!=TFTP_OPCODE_RRQ && opcode!=TFTP_OPCODE_WRQ){
+		if(opcode!=TFTP_OPCODE_RRQ && opcode!=TFTP_OPCODE_WRQ && opcode!=TFTP_OPCODE_DEL){
 			packetSize = 0;
 			LOG(ERROR)<< "Recv"<<opcode<<", Comp"<<TFTP_OPCODE_RRQ<<":"<<TFTP_OPCODE_WRQ;
 			LOG(ERROR)<< "Incompatable OPCODE received from "<< inet_ntoa(clientAddress.sin_addr) << ":" << ntohs(clientAddress.sin_port);
@@ -200,7 +200,7 @@ void handleClient(ClientHandler curClient){
 			else{
 				LOG(ERROR)<<"File Close Error";
 			}
-			close(clientSocketFD);
+			closeSocket(clientSocketFD);
 			return;
 		}
 		else{
@@ -218,7 +218,7 @@ void handleClient(ClientHandler curClient){
 				LOG(ERROR)<<"unknown error from server";
 			}
 			sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
-			close(clientSocketFD);
+			closeSocket(clientSocketFD);
 			return;
 		}
 	}
@@ -247,7 +247,7 @@ void handleClient(ClientHandler curClient){
 			else{
 				LOG(ERROR)<<"File Close Error";
 			}
-			close(clientSocketFD);
+			closeSocket(clientSocketFD);
 			return;
 		}
 		else{
@@ -265,7 +265,34 @@ void handleClient(ClientHandler curClient){
 				LOG(ERROR)<<"unknown error from server";
 			}
 			sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
-			close(clientSocketFD);
+			closeSocket(clientSocketFD);
+			return;
+		}
+	}
+	else if(curClient.requestType == TFTP_OPCODE_DEL){
+		int sendPacketSize;
+		LOG(INFO)<<"Delete request process initiated";
+		TftpErrorCode errorCode;
+		if(STARK::getInstance().isFileDeletable(curClient.requestFileName,errorCode)){
+			packetSize = makeACKPacket(sendBuffer,sizeof(sendBuffer),TFTP_VALID_DELETE);
+			sendPacketSize = sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
+			if(sendPacketSize!=packetSize){
+				LOG(ERROR)<<"Delete valid ACK not sent completely";
+				closeSocket(clientSocketFD);
+				return;
+			}
+			LOG(INFO)<<"File: "<<curClient.requestFileName<<", deletion success";
+			closeSocket(clientSocketFD);
+			return;
+		}
+		else{
+			LOG(ERROR)<<"unable to delete the file";
+			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), errorCode, "unable to delete the file");
+			sendPacketSize = sendBufferThroughUDP(sendBuffer, packetSize, clientSocketFD, curClient.clientAddress);
+			if(sendPacketSize!=packetSize){
+				LOG(ERROR)<<"Error packet not sent completely";	
+			}
+			closeSocket(clientSocketFD);
 			return;
 		}
 	}
@@ -273,11 +300,11 @@ void handleClient(ClientHandler curClient){
 		LOG(ERROR)<<"invalid opcode";
 		packetSize  = 0;
 		packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "invalid opcode during internal processing");
-		sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
-		close(clientSocketFD);
+		sendBufferThroughUDP(sendBuffer, packetSize, clientSocketFD, curClient.clientAddress);
+		closeSocket(clientSocketFD);
 		return;
 	}
-	close(clientSocketFD);
+	closeSocket(clientSocketFD);
 	return;
 }
 
@@ -456,4 +483,14 @@ bool handleReceiveData(ClientHandler curClient, std::ofstream& fd){
 	return false;
 }
 
-
+/**
+ * @brief Function to close socket and wait for 2 seconds.
+ * 
+ * @param socketFD 
+ */
+void closeSocket(int socketFD){
+	std::chrono::seconds duration(2);
+    std::this_thread::sleep_for(duration);
+    close(socketFD);
+    return;
+}

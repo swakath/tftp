@@ -50,6 +50,60 @@ bool STARK::isFileAvailable(std::string fileName){
 	}
 	return false;
 }
+
+/**
+ * @brief Function to check if the giveing file is deletable and if yes then deletes it
+ * 
+ * @param fileName 
+ * @return true 
+ * @return false 
+ */
+bool STARK::isFileDeletable(std::string fileName, TftpErrorCode& errorCode){
+	errorCode = TFTP_ERROR_ACCESS_VIOLATION;
+	if(!fileName.empty()){
+		std::string filePath = root_dir + fileName;
+		if(isFileAvailable(fileName)){
+			if(fileData.find(fileName) != fileData.end()){
+				if(fileData[fileName].first == 0 && fileData[fileName].second == false){
+					LOG(DEBUG)<<"File in map but no reader or no writer, file is deletable";
+					if(std::remove(filePath.c_str()) == 0){
+						LOG(INFO)<<"File "<<filePath<<" Deleted from server";
+						return true;
+					}else{
+						LOG(ERROR)<<"Error deleting file"<<strerror(errno);
+						return false;
+					}
+				}
+				else{
+					errorCode = TFTP_ERROR_ACCESS_VIOLATION;
+					LOG(DEBUG)<<"File is in use";
+					return false;
+				}
+			}else{
+				LOG(DEBUG)<<"File is deletable, not found in map";
+				if(std::remove(filePath.c_str()) == 0){
+					LOG(INFO)<<"File "<<filePath<<" Deleted from server";
+					return true;
+				}else{
+					LOG(ERROR)<<"Error deleting file"<<strerror(errno);
+					return false;
+				}
+				return true;
+			}
+		}else{
+			LOG(DEBUG)<<"File cant be deleted, not found in disk";
+			errorCode = TFTP_ERROR_FILE_NOT_FOUND;
+			return false;
+		}
+	}else{
+		LOG(ERROR)<<"empty file name";
+		return false;
+	}
+	return false;
+}
+
+
+
 /**
  * @brief function to check if a file is having read permission
  * opens the file in read more if the permission exists and return the file object
