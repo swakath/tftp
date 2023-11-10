@@ -111,7 +111,7 @@ void clientManager::handleTFTPConnection(){
 	}
 	else if(this->requestType == TFTP_OPCODE_WRQ){
         LOG(INFO)<<"Write request process initiated";
-        if(STARK::getInstance().isFileAvailable(this->requestFileName)){
+        if(!STARK::getInstance().isFileAvailable(this->requestFileName)){
             LOG(ERROR)<<"File Not Available in Disk";
             return;
         }
@@ -168,7 +168,7 @@ bool clientManager::handleReceiveData(std::ofstream& fd){
 		bool dataRecvStatus = false;
 		int recvDataLen = 0;
 		int inValidTries = 0;
-		bool isErrorPktReceived;
+		bool isErrorPktReceived = false;
         bool isFirstPacket = true;
 
         sendPacketSize = makeComInitPacket(TFTP_OPCODE_RRQ,sendBuffer,sizeof(sendBuffer),this->requestFileName.c_str(),TFTP_MODE_OCTET);
@@ -249,6 +249,8 @@ bool clientManager::handleReceiveData(std::ofstream& fd){
         LOG(ERROR)<<"File open error";
         return false;
     }
+    LOG(ERROR)<<"Open Condition";
+    return false;
 }
 
 /**
@@ -259,5 +261,109 @@ bool clientManager::handleReceiveData(std::ofstream& fd){
  * @return false 
  */
 bool clientManager::handleSendData(std::ifstream& fd){
+    uint8_t sendBuffer[TFTP_MAX_PACKET_SIZE];
+	uint8_t dataBuffer[TFTP_MAX_DATA_SIZE];
+	if(fd.is_open()){
+		bool allDataSent = false;
+		int bytesRead = 0;
+		int sendPacketSize = 0;
+		int ret = 0;
+		bool ackStatus = false;
+		int inValidTries = 0;
+		int getNewPacket = true;
+		bool isErrorPktReceived = false;
+        bool isFirstACKReceived = false;
+        sendPacketSize = makeComInitPacket(TFTP_OPCODE_WRQ,sendBuffer,sizeof(sendBuffer),this->requestFileName.c_str(),TFTP_MODE_OCTET);
+        if(sendPacketSize == -1){
+            LOG(ERROR)<<"unable to make data packet";
+            return false;
+        }
+        ret = sendBufferThroughUDP(sendBuffer, sendPacketSize, this->defaultSocket, this->serverAddress);
+        if(ret != sendPacketSize){
+            LOG(ERROR)<<"packet send error";
+            return false;
+        }
 
+        while(!allDataSent){
+			if(inValidTries > TFTP_RECEIVE_TRIES){
+				LOG(ERROR)<<"lost connection";
+				return false;
+			}
+			ret = 0;
+			sendPacketSize = 0;
+			ackStatus = false;
+			isErrorPktReceived = false;
+            
+            ackStatus = getACK(this->defaultSocket, this->serverAddress, this->blockNum, isErrorPktReceived, !isFirstACKReceived);
+			if(ackStatus){
+				LOG(DEBUG)<<"Valid ACK received";
+				inValidTries = 0;
+				getNewPacket = true;
+				LOG(DEBUG)<<"Bytes read and sent: "<<bytesRead;
+				if(bytesRead < TFTP_MAX_DATA_SIZE && isFirstACKReceived){
+					LOG(DEBUG)<<"All data sent";
+					allDataSent = true;
+                    break;
+				}
+                if(isFirstACKReceived == false){
+                    isFirstACKReceived = true;
+                }
+			}
+			else{
+				if(!isErrorPktReceived){
+					LOG(ERROR)<<"Invalid ack, soft continue";
+					getNewPacket = false;
+					inValidTries++;
+				}
+				else{
+					LOG(ERROR)<<"Error received from client. Terminating transfer";
+					return false;
+				}
+			}
+
+            if(isFirstACKReceived){
+                if(getNewPacket){
+                    bytesRead = 0;
+                    bytesRead = readData512(dataBuffer, sizeof(dataBuffer), fd);
+                    if(bytesRead == -1){
+                        LOG(ERROR)<<"file read error";
+                        sendPacketSize = 0;
+                        sendPacketSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "Server side data read error");
+			            sendBufferThroughUDP(sendBuffer, sendPacketSize, this->defaultSocket, this->serverAddress);
+                        return false;
+                    }
+                    this->blockNum++;
+                }
+                sendPacketSize = makeDataPacket(sendBuffer, sizeof(sendBuffer), this->blockNum, dataBuffer, bytesRead);
+                if(sendPacketSize == -1){
+                    LOG(ERROR)<<"unable to make data packet";
+                    return false;
+                }
+                LOG(DEBUG)<<"Data packet generated successfully";
+                ret = sendBufferThroughUDP(sendBuffer, sendPacketSize, this->defaultSocket, this->serverAddress);
+                if(ret != sendPacketSize){
+                    LOG(ERROR)<<"packet send error";
+                    return false;
+                }
+                LOG(DEBUG)<<"Data packet sent successfully";
+            }
+            else{
+                LOG(ERROR)<<"First ACK not received. Soft continue.";
+            }
+        }
+        if(allDataSent){
+            LOG(INFO)<<"All data sent";
+            return true;
+        }
+        else{
+            LOG(ERROR)<<"Unexpected error";
+            return false;
+        }
+    }
+    else{
+        LOG(ERROR)<<"File open error";
+        return false;
+    }
+    LOG(ERROR)<<"Open Condition";
+    return false;
 }

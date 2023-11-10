@@ -232,7 +232,7 @@ void handleClient(ClientHandler curClient){
 			bool ret;
 			ret = handleReceiveData(curClient, fd);
 			if(ret){
-				LOG(INFO)<<"All data sent";
+				LOG(INFO)<<"All data received";
 			}
 			else{
 				packetSize = 0;
@@ -332,7 +332,7 @@ bool handleSendData(ClientHandler curClient, std::ifstream& fd){
 				inValidTries = 0;
 				getNewPacket = true;
 				LOG(DEBUG)<<"Bytes read and sent: "<<bytesRead;
-				if(bytesRead < TFTP_MAX_DATA_SIZE || fd.eof()){
+				if(bytesRead < TFTP_MAX_DATA_SIZE){
 					LOG(DEBUG)<<"All data sent";
 					allDataSent = true;
 				}
