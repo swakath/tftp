@@ -31,7 +31,7 @@ clientManager::clientManager(){
  * @return false 
  */
 bool clientManager::commInit(std::string rootDir, std::string fileName, std::string serverIP, TftpOpcode requestType){
-    if(requestType==TFTP_OPCODE_RRQ || requestType == TFTP_OPCODE_WRQ){
+    if(requestType==TFTP_OPCODE_RRQ || requestType == TFTP_OPCODE_WRQ || requestType == TFTP_OPCODE_DEL){
         this->root_dir = rootDir;
         this->requestFileName = fileName;
         this->requestType = requestType;
@@ -142,6 +142,42 @@ void clientManager::handleTFTPConnection(){
             LOG(ERROR)<<"File open error";
             return;
         }
+    }
+    else if(this->requestType == TFTP_OPCODE_DEL){
+        LOG(INFO)<<"Delete request process initatied";
+        int sendPacketSize = 0;
+        int ret = 0;
+        sendPacketSize = makeComInitPacket(TFTP_OPCODE_DEL,sendBuffer,sizeof(sendBuffer),this->requestFileName.c_str(),TFTP_MODE_OCTET);
+        if(sendPacketSize < 0){
+            LOG(ERROR)<<"Error Generating Delete Packet";
+            return;
+        }
+        ret = sendBufferThroughUDP(sendBuffer, sendPacketSize, this->defaultSocket, this->serverAddress);
+        if(ret != sendPacketSize){
+            LOG(ERROR)<<"packet send error";
+            return;
+        }
+        bool recvError = false;
+        bool isValidAck = false;
+        for(int getAckTries = 0; getAckTries < TFTP_RECEIVE_TRIES; ++getAckTries){
+            recvError = false;
+            isValidAck = false;
+            isValidAck =  getACK(this->defaultSocket, this->serverAddress, TFTP_VALID_DELETE_ACK, recvError, true);
+            if(isValidAck){
+                LOG(INFO)<<"File Deletion success";
+                return;
+            }
+            if(!recvError){
+                LOG(ERROR)<<"No responce, soft continue";
+            }else{
+                LOG(ERROR)<<"Error received";
+                return;
+            }
+        }
+        LOG(ERROR)<<"No valid ACK received from server. Terminating connection";
+        sendPacketSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "no ack received. time out error");
+        sendBufferThroughUDP(sendBuffer, sendPacketSize, this->defaultSocket, this->serverAddress);
+        return;
     }
 	else{
         LOG(ERROR)<<"Invalid Opcode";

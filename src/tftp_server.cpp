@@ -274,7 +274,7 @@ void handleClient(ClientHandler curClient){
 		LOG(INFO)<<"Delete request process initiated";
 		TftpErrorCode errorCode;
 		if(STARK::getInstance().isFileDeletable(curClient.requestFileName,errorCode)){
-			packetSize = makeACKPacket(sendBuffer,sizeof(sendBuffer),TFTP_VALID_DELETE);
+			packetSize = makeACKPacket(sendBuffer,sizeof(sendBuffer),TFTP_VALID_DELETE_ACK);
 			sendPacketSize = sendBufferThroughUDP(sendBuffer, packetSize, curClient.defaultServerSocket, curClient.clientAddress);
 			if(sendPacketSize!=packetSize){
 				LOG(ERROR)<<"Delete valid ACK not sent completely";

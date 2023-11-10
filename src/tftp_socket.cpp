@@ -103,7 +103,7 @@ int sendBufferThroughUDP(uint8_t* sendBuffer, size_t bufferLen, int socketfd, st
 		socklen_t clientAddressLength = sizeof(clientAddress);
 		sendLen = sendto(socketfd, sendBuffer, bufferLen, 0, (struct sockaddr*)&clientAddress, clientAddressLength);
 		if(sendLen == -1){
-			LOG(ERROR)<<"Data not send";
+			LOG(ERROR)<<"Data not send, "<<strerror( errno );
 			return -1;
 		}
 		else if(sendLen != bufferLen){

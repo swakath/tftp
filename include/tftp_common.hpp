@@ -50,7 +50,7 @@
 #define TFTP_MIN_CONN_INIT_PACKET_SIZE 8 //8 bytes minimum rrq/wrq packet size
 #define TFTP_MIN_PORT 1024
 #define TFTP_MAX_PORT 65535
-#define TFTP_VALID_DELETE 1
+#define TFTP_VALID_DELETE_ACK 1
 #define LOG_BUFF_SIZE 1024
 
 static char log_message[LOG_BUFF_SIZE];

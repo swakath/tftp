@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
     std::string requestFileName(argv[2]);
     std::string serverIP(argv[3]);
 
-    if(tftpMode!=CLIENT_READ && tftpMode!=CLIENT_WRITE){
+    if(tftpMode!=CLIENT_READ && tftpMode!=CLIENT_WRITE && tftpMode!=CLIENT_DELETE){
         std::cout<<"Invalid mode. Usage: <TFTP_OPERATION> = READ|WRITE";
         return(EXIT_FAILURE);
     }
@@ -52,9 +52,13 @@ int main(int argc, char* argv[]){
         requestType = TFTP_OPCODE_WRQ;
         LOG(INFO)<<"WRQ request set";
     }
+    else if(tftpMode == CLIENT_DELETE){
+        requestType = TFTP_OPCODE_DEL;
+        LOG(INFO)<<"DEL request set";  
+    }
     else{
         LOG(ERROR)<<"Invalide tftpMode";
-                        exit(EXIT_FAILURE);
+        exit(EXIT_FAILURE);
     }
     STARK::getInstance().setRootDir(clientDir);
     ret = clientManager::getInstance().commInit(rootDir,requestFileName, serverIP, requestType);
