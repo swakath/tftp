@@ -71,6 +71,7 @@ bool STARK::isFileDeletable(std::string fileName, TftpErrorCode& errorCode){
 						return true;
 					}else{
 						LOG(ERROR)<<"Error deleting file"<<strerror(errno);
+						errorCode = TFTP_ERROR_NOT_DEFINED;
 						return false;
 					}
 				}
@@ -86,6 +87,7 @@ bool STARK::isFileDeletable(std::string fileName, TftpErrorCode& errorCode){
 					return true;
 				}else{
 					LOG(ERROR)<<"Error deleting file"<<strerror(errno);
+					errorCode = TFTP_ERROR_NOT_DEFINED;
 					return false;
 				}
 				return true;

@@ -286,8 +286,19 @@ void handleClient(ClientHandler curClient){
 			return;
 		}
 		else{
-			LOG(ERROR)<<"unable to delete the file";
-			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), errorCode, "unable to delete the file");
+			packetSize = 0;
+			if(errorCode == TFTP_ERROR_FILE_NOT_FOUND){
+				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_FILE_NOT_FOUND, "file not found in server");
+				LOG(ERROR)<<"file not found in server";
+			}
+			else if(errorCode == TFTP_ERROR_ACCESS_VIOLATION){
+				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_ACCESS_VIOLATION, "file access denied in server");
+				LOG(ERROR)<<"file access denied in server";
+			}
+			else{
+				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NOT_DEFINED, "unknown error from server, file not deleted");
+				LOG(ERROR)<<"unknown error from server, file not deleted";
+			}
 			sendPacketSize = sendBufferThroughUDP(sendBuffer, packetSize, clientSocketFD, curClient.clientAddress);
 			if(sendPacketSize!=packetSize){
 				LOG(ERROR)<<"Error packet not sent completely";	
