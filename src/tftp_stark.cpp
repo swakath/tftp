@@ -178,10 +178,22 @@ std::ofstream STARK::isFileWritable(std::string fileName, TftpErrorCode& errorCo
 					return fileWrite;
 				}
 				else{
-					LOG(FATAL)<<"file not in directory but present in map.";
-					errorCode = TFTP_ERROR_NOT_DEFINED;
-					fileWrite.close();
-					return std::ofstream();
+					if(fileData[fileName].first == 0 && fileData[fileName].second == false){
+						fileData[fileName].second = true;
+						LOG(INFO)<<"file opened in write mode and already present in map";
+						return fileWrite;
+					}
+					else{
+						if(fileData[fileName].first != 0){
+							LOG(ERROR)<<"file already in read process.";
+						}
+						else{
+							LOG(ERROR)<<"=====CAUTION==== file already in write process.";
+						}
+						errorCode = TFTP_ERROR_NOT_DEFINED;
+						fileWrite.close();
+						return std::ofstream();
+					}
 				}
 			}
 			else{

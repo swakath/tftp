@@ -79,7 +79,7 @@ int createRandomUDPSocket(const char* socketIP, int* randomPort){
 		while(numTries < MAX_RANDOM_TRIES){
 			srand(static_cast<unsigned int>(time(nullptr)));
 			int curRandomPort = TFTP_MIN_PORT + (rand() % (TFTP_MAX_PORT - TFTP_MIN_PORT + 1));
-			randomSocketFD = createUDPSocket(socketIP, curRandomPort);
+			randomSocketFD = createUDPSocket(socketIP, curRandomPort+numTries);
 			if(randomSocketFD != -1){
 				*randomPort = curRandomPort;
 				return randomSocketFD; 
