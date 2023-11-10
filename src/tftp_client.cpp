@@ -258,6 +258,6 @@ bool clientManager::handleReceiveData(std::ofstream& fd){
  * @return true 
  * @return false 
  */
-bool handleSendData(std::ifstream& fd){
+bool clientManager::handleSendData(std::ifstream& fd){
 
 }
