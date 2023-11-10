@@ -7,17 +7,29 @@ find_package(Threads REQUIRED)
 # Specify the directories where to find header files
 include_directories(include)
 
-set(SOURCES
-    src/server_main.cpp
+ 
+set(COMMON_SOURCES
     src/easylogging++.cc
     src/tftp_socket.cpp
     src/tftp_packets.cpp
     src/tftp_stark.cpp
     src/tftp_server.cpp
-    
+    src/tftp_client.cpp
 )
 
-# Create an executable from the source files
-add_executable(${PROJECT_NAME} ${SOURCES})
-target_link_libraries(${PROJECT_NAME} Threads::Threads)
-target_compile_definitions(${PROJECT_NAME} PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
+# Create an executable for server
+add_executable(tftpServer 
+            ${COMMON_SOURCES}
+            src/server_main.cpp
+            )
+
+# Create an executable for server
+add_executable(tftpClient 
+            ${COMMON_SOURCES}
+            src/client_main.cpp
+            )
+target_link_libraries(tftpServer Threads::Threads)
+target_compile_definitions(tftpServer PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
+
+target_link_libraries(tftpClient Threads::Threads)
+target_compile_definitions(tftpClient PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
