@@ -163,7 +163,7 @@ int getBufferThroughUDP(uint8_t* recvBuffer, size_t bufferLen, int socketfd, str
 /**
  * @brief function to handle receiveing ACK from a TFTP Client
 */
-bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, bool& recvError){
+bool getACK(int clientSocket, struct sockaddr_in& clientAddress, uint16_t expectedBlockNum, bool& recvError, bool ignoreAddress){
 	uint8_t recvBuffer[TFTP_MAX_PACKET_SIZE];
 	uint8_t sendBuffer[TFTP_MAX_PACKET_SIZE];
 	int packetSize;
@@ -176,22 +176,26 @@ bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expecte
 		return false;
 	}
 
-	if(recvAddress.sin_addr.s_addr!=clientAddress.sin_addr.s_addr){ 
-		packetSize = 0;
-		LOG(ERROR)<<"packet from unknown host";
-		packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NO_SUCH_USER, "you are a unknow user");
-		sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
-		return false;
-	}
+	if(!ignoreAddress){
+		if(recvAddress.sin_addr.s_addr!=clientAddress.sin_addr.s_addr){ 
+			packetSize = 0;
+			LOG(ERROR)<<"packet from unknown host";
+			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NO_SUCH_USER, "you are a unknow user");
+			sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
+			return false;
+		}
 
-	if(recvAddress.sin_port!=clientAddress.sin_port){
-		packetSize = 0;
-		LOG(ERROR)<<"invalid TID";
-		packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_UNKNOWN_TID, "you are a unknow user");
-		sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
-		return false;
+		if(recvAddress.sin_port!=clientAddress.sin_port){
+			packetSize = 0;
+			LOG(ERROR)<<"invalid TID";
+			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_UNKNOWN_TID, "you are a unknow user");
+			sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
+			return false;
+		}
 	}
-
+	else{
+		LOG(INFO)<<"Address ignore is set true.";
+	}
 	if(ret < 4){
 		LOG(ERROR)<<"invalid packet expected ACK paket of 4 bytes";
 		return false;
@@ -214,6 +218,10 @@ bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expecte
 		}
 
 		LOG(DEBUG)<<"Valid ACK Received block number: "<<recvBlockNum;
+		if(ignoreAddress){
+			LOG(INFO)<<"Address ignore is set true. Updated Address";
+			clientAddress = recvAddress;
+		}
 		return true;
 	}
 	else if(opcode == TFTP_OPCODE_ERROR){
@@ -238,7 +246,7 @@ bool getACK(int clientSocket, struct sockaddr_in clientAddress, uint16_t expecte
 /**
  * @brief receives TFTP data packet from specified client socket
 */
-bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expectedBlockNum, uint8_t* recvDataBuffer, size_t bufferSize, int& dataLen, bool& recvError){
+bool getData(int clientSocket, struct sockaddr_in& clientAddress, uint16_t expectedBlockNum, uint8_t* recvDataBuffer, size_t bufferSize, int& dataLen, bool& recvError, bool ignoreAddress){
 	uint8_t recvBuffer[TFTP_MAX_PACKET_SIZE];
 	uint8_t sendBuffer[TFTP_MAX_PACKET_SIZE];
 	int packetSize = 0;
@@ -254,21 +262,25 @@ bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expect
 			LOG(ERROR)<<"receive error";
 			return false;
 		}
+		if(!ignoreAddress){
+			if(recvAddress.sin_addr.s_addr!=clientAddress.sin_addr.s_addr){ 
+				packetSize = 0;
+				LOG(ERROR)<<"packet from unknown host";
+				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NO_SUCH_USER, "you are a unknow user");
+				sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
+				return false;
+			}
 
-		if(recvAddress.sin_addr.s_addr!=clientAddress.sin_addr.s_addr){ 
-			packetSize = 0;
-			LOG(ERROR)<<"packet from unknown host";
-			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_NO_SUCH_USER, "you are a unknow user");
-			sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
-			return false;
-		}
-
-		if(recvAddress.sin_port!=clientAddress.sin_port){
-			packetSize = 0;
-			LOG(ERROR)<<"invalid TID";
-			packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_UNKNOWN_TID, "you are a unknow user");
-			sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
-			return false;
+			if(recvAddress.sin_port!=clientAddress.sin_port){
+				packetSize = 0;
+				LOG(ERROR)<<"invalid TID";
+				packetSize = makeErrorPacket(sendBuffer,sizeof(sendBuffer), TFTP_ERROR_UNKNOWN_TID, "you are a unknow user");
+				sendBufferThroughUDP(sendBuffer, packetSize, clientSocket, recvAddress);
+				return false;
+			}
+		} 
+		else{
+			LOG(INFO)<<"Address ignore is set true.";
 		}
 
 		if(ret < 4){
@@ -300,6 +312,10 @@ bool getData(int clientSocket, struct sockaddr_in clientAddress, uint16_t expect
 				memcpy(recvDataBuffer, recvBuffer + 4, dataLen);
 			}
 			LOG(DEBUG)<<"Valid Data Received block number: "<<recvBlockNum<<", Length: "<<dataLen;
+			if(ignoreAddress){
+				LOG(INFO)<<"Address ignore is set true. Updated Address";
+				clientAddress = recvAddress;
+			}
 			return true;
 		}
 		else if(opcode == TFTP_OPCODE_ERROR){
