@@ -11,8 +11,8 @@
  * MIT License
 */ 
 
-#ifndef TFTP_SER
-#define TFTP_SER
+#ifndef TFTP_SERVER
+#define TFTP_SERVER
 
 #ifndef TFTP_SOCK
     #include "tftp_socket.hpp"
@@ -57,7 +57,3 @@ void handleServerTermination();
 bool handleSendData(ClientHandler curClient, std::ifstream& fd);
 bool handleReceiveData(ClientHandler curClient, std::ofstream& fd); 
 #endif
-
-
-
-
