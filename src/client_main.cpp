@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
     std::string serverIP(argv[3]);
 
     if(tftpMode!=CLIENT_READ && tftpMode!=CLIENT_WRITE && tftpMode!=CLIENT_DELETE){
-        std::cout<<"Invalid mode. Usage: <TFTP_OPERATION> = READ|WRITE";
+        std::cout<<"Invalid mode. Usage: <TFTP_OPERATION> = READ|WRITE|DELETE";
         return(EXIT_FAILURE);
     }
     
