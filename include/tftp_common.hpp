@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <thread>
 #include <mutex>
+#include <filesystem>
 
 #include <string>
 #include <vector>

@@ -505,3 +505,46 @@ void closeSocket(int socketFD){
     close(socketFD);
     return;
 }
+
+
+/**
+ * @brief Function to List the directory content.
+ * 
+ */
+bool list_dir(std::string dir, std::string&  fname) {
+    
+
+    // Get the current timestamp
+    auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    
+    std::string timestamp = ctime(&now);
+    timestamp.pop_back();
+
+    // Create the output filename with timestamp
+    std::string output_fname = "output_" + std::to_string(now) + ".txt";
+    fname = output_fname;
+
+    // Open the file for writing
+    std::ofstream output_file(output_fname);
+    // Check if the file is successfully opened
+    if (!output_file.is_open()) {
+        LOG(ERROR)<<"Error opening output file: "<<output_fname<<std::endl;
+        return false;
+    }
+
+    // Write the header to the file
+    output_file<<"Generated at " <<timestamp<<"."<<std::endl;
+    output_file<<"\nList of Files in server :" << std::endl;
+
+    // Iterate through the directory and write the content to the file
+    for (const auto & file : std::filesystem::directory_iterator(dir)) {
+        output_file << std::filesystem::path(file).filename() << std::endl;
+    }
+
+    // Close the file
+    output_file.close();
+
+    LOG(INFO)<<"Output saved to: "<<output_fname<<std::endl;
+    
+    return true;
+}

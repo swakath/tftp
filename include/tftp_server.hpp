@@ -57,4 +57,5 @@ void handleServerTermination();
 bool handleSendData(ClientHandler curClient, std::ifstream& fd);
 bool handleReceiveData(ClientHandler curClient, std::ofstream& fd);
 void closeSocket(int socketFD); 
+bool list_dir(std::string dir, std::string&  fname);
 #endif
