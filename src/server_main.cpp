@@ -12,6 +12,8 @@
 */
 
 #include "tftp_server.hpp"
+#define DEBUG 1
+#define TOSTDOUT 1
 INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char* argv[]){
@@ -20,8 +22,16 @@ int main(int argc, char* argv[]){
     defaultConf.setToDefault();
     defaultConf.set(el::Level::Global, el::ConfigurationType::Format, "%datetime [%level] [%thread] [%func][%line] %msg");
     
-    //defaultConf.set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
-    //defaultConf.set(el::Level::Global, el::ConfigurationType::ToStandardOutput, "false");
+    if(DEBUG){
+        defaultConf.set(el::Level::Debug, el::ConfigurationType::Enabled, "true");
+    }else{
+        defaultConf.set(el::Level::Debug, el::ConfigurationType::Enabled, "false");
+    }
+    if(TOSTDOUT){
+        defaultConf.set(el::Level::Global, el::ConfigurationType::ToStandardOutput, "true");
+    }else{
+        defaultConf.set(el::Level::Global, el::ConfigurationType::ToStandardOutput, "false");
+    }
     defaultConf.set(el::Level::Global, el::ConfigurationType::Filename, "logs/logServer.log");
     
     el::Loggers::reconfigureLogger("default", defaultConf);
