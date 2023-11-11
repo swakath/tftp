@@ -8,8 +8,6 @@ Trivial File Transport Protocol Implementation as per RFC 1350. This project was
 - [easyloggingpp](https://github.com/abumq/easyloggingpp) for generating logs.
 
 
-
-
 ## Building and Usage
 ~~~
 # Create a build directory inside tftp dir
@@ -43,3 +41,17 @@ DELETE operation is a connection initiation operation like RRQ and WRQ operation
 
 ### Debug Logs
 As mentioned above, the implementation uses [easyloggingpp](https://github.com/abumq/easyloggingpp) for generating logs. To enable Debug level logs, set the macro DEBUG to 1 , else set it to 0. To enable print of the logs to standard output set the macro TOSTDOUT to 1, else set it to 0. Disable debug while normal usage.
+
+### Unit testing
+As mentioned above, the implementation uses [GTest](https://github.com/google/googletest) for unit testing. Test are organized into suites, each test suit is contained in a seperate CPP file. All the unit test CPP files are organized into gtest directory. Test execution is as follows
+~~~
+# Create a build directory inside gtest dir
+mkdir build
+cd build
+cmake ..
+
+# Execution of test
+./unitTest
+~~~
+
+The test suit is very basic. **Contributions to developing the testsuit and mock sockets will be much appretiated**.
