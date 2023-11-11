@@ -28,8 +28,8 @@ add_executable(tftpClient
             ${COMMON_SOURCES}
             src/client_main.cpp
             )
-target_link_libraries(tftpServer Threads::Threads)
+target_link_libraries(tftpServer Threads::Threads stdc++fs)
 target_compile_definitions(tftpServer PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
 
-target_link_libraries(tftpClient Threads::Threads)
+target_link_libraries(tftpClient Threads::Threads stdc++fs)
 target_compile_definitions(tftpClient PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)

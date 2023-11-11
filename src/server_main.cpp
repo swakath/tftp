@@ -12,7 +12,7 @@
 */
 
 #include "tftp_server.hpp"
-#define DEBUG 1
+#define DEBUG 0
 #define TOSTDOUT 1
 INITIALIZE_EASYLOGGINGPP
 
