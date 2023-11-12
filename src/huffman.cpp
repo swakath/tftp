@@ -306,7 +306,7 @@ bool Huffman::compressFile(){
         while (strBuffer.size() % 8 != 0) {
             strBuffer += '0';
         }
-
+        LOG(INFO)<<"Last buffer:"<<strBuffer<<",EOT: "<<this->encodeHuffmanTable[EOT];
         while(strBuffer.size()>=8){
             std::bitset<8> byte(strBuffer.substr(0,8));
             char encodedByte = static_cast<char>(byte.to_ulong() & 0xFF);
@@ -358,46 +358,49 @@ bool Huffman::decompressFile(){
             LOG(ERROR)<<"Error in generating table from header";
             return false;
         }
-
-        //std::string otherOut = this->textFilePath + "check";
+        //std::string otherOut = "D" + this->textFilePath;
         //std::ofstream outFile(otherOut.c_str(), std::ios::out);
-
         std::ofstream outFile(this->textFilePath.c_str(), std::ios::out);
         if(!outFile){
             LOG(ERROR)<<"Error opening file: "<<this->textFilePath;
             return false;
         }
-
         std::string buffer;
         char byte;
         bool isEOTReceived = false;
         char EOT = END_TO_TRANSMISSION;
+
         while(inFile.get(byte) && !isEOTReceived){
             std::bitset<8> bits(byte);
             buffer += bits.to_string();
-
-            for (const auto& entry : this->decodeHuffmanTable) {
-                while (buffer.size() >= entry.first.size()) {
-                    if (buffer.substr(0, entry.first.size()) == entry.first) {
-                        
-                        if(!outFile){
-                            LOG(ERROR)<<"Error writing to file";
-                            inFile.close();
-                            outFile.close();
-                            return false;
+            bool cntRead = true;
+            while(cntRead){
+                for (const auto& entry : this->decodeHuffmanTable) {
+                    while (buffer.size() >= entry.first.size()) {
+                        if (buffer.substr(0, entry.first.size()) == entry.first) {
+                            if(!outFile){
+                                LOG(ERROR)<<"Error writing to file";
+                                inFile.close();
+                                outFile.close();
+                                return false;
+                            }
+                            buffer.erase(0, entry.first.size());
+                            if(entry.first == this->encodeHuffmanTable[EOT]){
+                                isEOTReceived = true;
+                            }else{
+                                outFile.put(entry.second);
+                            }
+                        } else {
+                            break;
                         }
-                        buffer.erase(0, entry.first.size());
-                        if(entry.second == END_TO_TRANSMISSION){
-                            isEOTReceived = true;
-                        }else{
-                            outFile.put(entry.second);
-                        }
-                    } else {
+                    }
+                    if(buffer.size() < entry.first.size() || isEOTReceived){
+                        cntRead = false;
                         break;
                     }
                 }
-                if(buffer.size() < entry.first.size() || isEOTReceived){
-                    break;
+                if(buffer.size() < this->decodeHuffmanTable.begin()->first.size() || (buffer.size() == this->decodeHuffmanTable.begin()->first.size() && buffer!=this->decodeHuffmanTable.begin()->first)){
+                    cntRead = false;
                 }
             }
         }

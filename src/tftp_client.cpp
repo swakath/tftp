@@ -84,8 +84,14 @@ void clientManager::handleTFTPConnection(){
         LOG(INFO)<<"Read request process initatied";
         std::ofstream fd;
 		TftpErrorCode errorCode;
-		fd = STARK::getInstance().isFileWritable(this->requestFileName, errorCode);
-		if(fd.is_open()){
+        if(STARK::getInstance().isFileAvailable(this->requestFileName)){
+            LOG(ERROR)<<"File already available in disk";
+            return;
+        }
+        // Remove to integrate compression.
+		//fd = STARK::getInstance().isFileWritable(this->requestFileName, errorCode);
+		fd = STARK::getInstance().isFileWritable(this->compObj.compressFileName, errorCode);
+        if(fd.is_open()){
             LOG(INFO)<<"Raw rile open success";
             bool ret;
             ret = handleReceiveData(fd);
@@ -96,13 +102,32 @@ void clientManager::handleTFTPConnection(){
                 LOG(ERROR)<<"All data not received";
                 
             }
-            ret = STARK::getInstance().closeWritableFile(this->requestFileName, fd);
+            ret = STARK::getInstance().closeWritableFile(this->compObj.compressFileName, fd);
             if(ret){
 				LOG(INFO)<<"File Close Success";
 			}
 			else{
 				LOG(ERROR)<<"File Close Error";
+                return;
 			}
+
+            ret = this->compObj.decompressFile();
+            if(ret){
+                LOG(INFO)<<"Decompression successful";
+            }
+            else{
+                LOG(ERROR)<<"Error decompressing the received file";
+                return;
+            }
+            TftpErrorCode dummy;
+            //ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
+            if(ret){
+                LOG(INFO)<<"All temp files deleted";
+            }
+            else{
+                LOG(ERROR)<<"Error while deleting temp files";
+                return;
+            }
             return;
         }
         else{
@@ -118,6 +143,7 @@ void clientManager::handleTFTPConnection(){
         }
         std::ifstream fd;
 		TftpErrorCode errorCode;
+        // Remove to integrate compression.
 		//fd = STARK::getInstance().isFileReadable(this->requestFileName, errorCode);
 		bool compRet;
         compRet = this->compObj.compressFile();
@@ -126,6 +152,7 @@ void clientManager::handleTFTPConnection(){
             return;
         }
         LOG(INFO)<<"Compression success";
+
         fd = STARK::getInstance().isFileReadable(this->compObj.compressFileName, errorCode);
 		
         if(fd.is_open()){
@@ -147,7 +174,8 @@ void clientManager::handleTFTPConnection(){
 				LOG(ERROR)<<"File Close Error";
 			}
             TftpErrorCode dummy;
-            ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
+            ret = true;
+            //ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
             if(ret){
 				LOG(INFO)<<"Temp files deleted";
 			}

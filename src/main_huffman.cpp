@@ -1,9 +1,19 @@
 #include "huffman.hpp"
-#define DEBUG 0
+//#define DEBUG 1
 #define TOSTDOUT 1
 INITIALIZE_EASYLOGGINGPP
 
 int main(int argc, char* argv[]){
+    int DEBUG = 0;
+    if(argc!=4){
+        std::cout<<"Error argc\n";
+        exit(1);
+    }
+    std::string mode(argv[1]);
+    std::string fileName(argv[2]);
+    DEBUG = std::atoi(argv[3]);
+    std::cout<<"Args: "<<mode<<", "<<fileName<<", "<<DEBUG<<"\n";
+
     START_EASYLOGGINGPP(argc, argv);    
     el::Configurations defaultConf;
     defaultConf.setToDefault();
@@ -22,12 +32,25 @@ int main(int argc, char* argv[]){
     defaultConf.set(el::Level::Global, el::ConfigurationType::Filename, "logs/logHuff.log");
     
     el::Loggers::reconfigureLogger("default", defaultConf);
-
-    std::string fileName = "testFile.txt";
-
+    bool ret;
     Huffman Obj(fileName);
-    //Obj.compressFile();
-    Obj.decompressFile();
-
+    if(mode == "C"){
+        ret = Obj.compressFile();
+        if(ret)
+            LOG(INFO)<<"Return status True";
+        else    
+            LOG(ERROR)<<"Return status False";
+    }
+    else if(mode == "D"){
+        ret = Obj.decompressFile();
+        if(ret)
+            LOG(INFO)<<"Return status True";
+        else    
+            LOG(ERROR)<<"Return status False";
+    }
+    else{
+        LOG(ERROR)<<"Invalide mode";
+        return -1;
+    }
 	return 0;
 }
