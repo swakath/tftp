@@ -512,7 +512,6 @@ void closeSocket(int socketFD){
  * 
  */
 bool list_dir(std::string dir, std::string&  fname) {
-    
 
     // Get the current timestamp
     auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -544,7 +543,6 @@ bool list_dir(std::string dir, std::string&  fname) {
     // Close the file
     output_file.close();
 
-    LOG(INFO)<<"Output saved to: "<<output_fname<<std::endl;
-    
+    LOG(INFO)<<"Output saved to: "<<output_fname<<std::endl;    
     return true;
 }

@@ -34,6 +34,10 @@
     #include "tftp_stark.hpp"
 #endif
 
+#ifndef HUFFMAN_H
+    #include "huffman.hpp"
+#endif
+
 #define CLIENT_READ "READ"  //RRQ CLI
 #define CLIENT_WRITE "WRITE" //WRQ CLI
 #define CLIENT_DELETE "DELETE" //DEL CLI
@@ -57,6 +61,7 @@ class clientManager : public Singleton<clientManager>{
         std::string compressedFile;
         uint16_t blockNum; // Last block number sent or received
         std::string operationMode; // Currently operates only in octate mode
+        Huffman compObj;
         bool commInit(std::string rootDir, std::string fileName, std::string serverIP, TftpOpcode requestType);
         void commExit();
         void handleTFTPConnection();

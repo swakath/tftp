@@ -15,6 +15,7 @@ set(COMMON_SOURCES
     src/tftp_stark.cpp
     src/tftp_server.cpp
     src/tftp_client.cpp
+    src/huffman.cpp
 )
 
 # Create an executable for server
@@ -28,8 +29,17 @@ add_executable(tftpClient
             ${COMMON_SOURCES}
             src/client_main.cpp
             )
+
+add_executable(testHuffman
+            ${COMMON_SOURCES}
+            src/main_huffman.cpp
+            )
+
 target_link_libraries(tftpServer Threads::Threads stdc++fs)
 target_compile_definitions(tftpServer PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
 
 target_link_libraries(tftpClient Threads::Threads stdc++fs)
 target_compile_definitions(tftpClient PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
+
+target_link_libraries(testHuffman Threads::Threads stdc++fs)
+target_compile_definitions(testHuffman PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
