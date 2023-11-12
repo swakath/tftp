@@ -30,10 +30,10 @@ add_executable(tftpClient
             src/client_main.cpp
             )
 
-add_executable(testHuffman
-            ${COMMON_SOURCES}
-            src/main_huffman.cpp
-            )
+# add_executable(testHuffman
+#             ${COMMON_SOURCES}
+#             src/main_huffman.cpp
+#             )
 
 target_link_libraries(tftpServer Threads::Threads stdc++fs)
 target_compile_definitions(tftpServer PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
@@ -41,5 +41,5 @@ target_compile_definitions(tftpServer PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FI
 target_link_libraries(tftpClient Threads::Threads stdc++fs)
 target_compile_definitions(tftpClient PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
 
-target_link_libraries(testHuffman Threads::Threads stdc++fs)
-target_compile_definitions(testHuffman PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
+# target_link_libraries(testHuffman Threads::Threads stdc++fs)
+# target_compile_definitions(testHuffman PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)

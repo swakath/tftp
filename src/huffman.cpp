@@ -32,6 +32,16 @@ Huffman::Huffman(std::string filePath){
 }
 
 /**
+ * @brief Function to set the text file path
+ * 
+ * @param filePath 
+ */
+void Huffman::setFilePath(std::string filePath){
+    this->textFilePath = filePath;
+    this->compressedFilePath = filePath + COMPRESSION_EXTENSION;
+}
+
+/**
  * @brief Function to compare two <char,int> pair
  * 
  * @param a 

@@ -37,7 +37,7 @@ bool clientManager::commInit(std::string rootDir, std::string fileName, std::str
         this->requestType = requestType;
         this->blockNum = 0;
         this->operationMode = "octet"; // Currently only octet is supported
-        
+        this->compObj.setFilePath(rootDir+fileName);
         this->defaultSocket = createRandomUDPSocket(clientIP, &this->portNumber);
         if(this->defaultSocket == -1){
             LOG(FATAL)<<"Error opening client side default socket";

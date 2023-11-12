@@ -32,19 +32,20 @@ class Huffman {
         std::map<std::string, char> decodeHuffmanTable;
         std::string addBinary(const std::string& a, const std::string& b);
         std::vector<std::pair<char,uint8_t>> headerInfo;
+        bool generateFrequencyMap(std::vector<std::pair<char,long>>& freqMap);
+        bool generateHuffmanTableFromFile();
+        bool writeHeader(std::ofstream& fd);
+        bool readHeader(std::ifstream& fd);
+        bool generateTablesFromHeader();
     public:
         std::string textFilePath;
         std::string compressedFilePath;
         Huffman();
         Huffman(std::string textFilePath);
         // Function generates sorted list of symbols based on the frequencies.
-        bool generateFrequencyMap(std::vector<std::pair<char,long>>& freqMap);
-        bool generateHuffmanTableFromFile();
         bool compressFile();
         bool decompressFile();
-        bool writeHeader(std::ofstream& fd);
-        bool readHeader(std::ifstream& fd);
-        bool generateTablesFromHeader();
+        void setFilePath(std::string filePath);
 };
 
 bool freqCompare(const std::pair<char,long>& a, const std::pair<char,long>& b);
