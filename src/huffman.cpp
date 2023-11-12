@@ -216,7 +216,7 @@ bool Huffman::generateHuffmanTableFromFile(){
         }
 
         for(int i = 0; i<this->headerInfo.size(); ++i){
-            LOG(INFO)<<"Header:" << this->headerInfo[i].first<<", freq: "<<(int)this->headerInfo[i].second;
+            LOG(DEBUG)<<"Header:" << this->headerInfo[i].first<<", freq: "<<(int)this->headerInfo[i].second;
         }
 
         bool ret;
@@ -306,7 +306,7 @@ bool Huffman::compressFile(){
         while (strBuffer.size() % 8 != 0) {
             strBuffer += '0';
         }
-        LOG(INFO)<<"Last buffer:"<<strBuffer<<",EOT: "<<this->encodeHuffmanTable[EOT];
+        LOG(DEBUG)<<"Last buffer:"<<strBuffer<<",EOT: "<<this->encodeHuffmanTable[EOT];
         while(strBuffer.size()>=8){
             std::bitset<8> byte(strBuffer.substr(0,8));
             char encodedByte = static_cast<char>(byte.to_ulong() & 0xFF);

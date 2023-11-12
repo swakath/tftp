@@ -93,15 +93,15 @@ void clientManager::handleTFTPConnection(){
 		fd = STARK::getInstance().isFileWritable(this->compObj.compressFileName, errorCode);
         if(fd.is_open()){
             LOG(INFO)<<"Raw rile open success";
-            bool ret;
-            ret = handleReceiveData(fd);
-            if(ret){
+            bool isDataReceived  = false;
+            isDataReceived = handleReceiveData(fd);
+            if(isDataReceived){
                 LOG(INFO)<<"All data received";
             }
             else{
                 LOG(ERROR)<<"All data not received";
-                
             }
+            bool ret = false;
             ret = STARK::getInstance().closeWritableFile(this->compObj.compressFileName, fd);
             if(ret){
 				LOG(INFO)<<"File Close Success";
@@ -110,17 +110,18 @@ void clientManager::handleTFTPConnection(){
 				LOG(ERROR)<<"File Close Error";
                 return;
 			}
-
-            ret = this->compObj.decompressFile();
-            if(ret){
-                LOG(INFO)<<"Decompression successful";
-            }
-            else{
-                LOG(ERROR)<<"Error decompressing the received file";
-                return;
+            if(isDataReceived){
+                ret = this->compObj.decompressFile();
+                if(ret){
+                    LOG(INFO)<<"Decompression successful";
+                }
+                else{
+                    LOG(ERROR)<<"Error decompressing the received file";
+                    return;
+                }
             }
             TftpErrorCode dummy;
-            //ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
+            ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
             if(ret){
                 LOG(INFO)<<"All temp files deleted";
             }
@@ -175,7 +176,7 @@ void clientManager::handleTFTPConnection(){
 			}
             TftpErrorCode dummy;
             ret = true;
-            //ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
+            ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
             if(ret){
 				LOG(INFO)<<"Temp files deleted";
 			}
