@@ -51,3 +51,6 @@ debug/
 *.vsix
 *.vs
 .vscode/
+
+# tar files
+*.tar
