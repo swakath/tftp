@@ -43,7 +43,7 @@
     #include "easylogging++.h"
 #endif
 
-#define TFTP_DEFAULT_PORT 69
+#define TFTP_DEFAULT_PORT 1069
 #define TFTP_MAX_DATA_SIZE 512
 #define TFTP_MAX_HEADER_SIZE 4
 #define TFTP_MAX_PACKET_SIZE (TFTP_MAX_DATA_SIZE + TFTP_MAX_HEADER_SIZE)
