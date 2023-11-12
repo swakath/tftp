@@ -35,11 +35,11 @@ bool STARK::isFileAvailable(std::string fileName){
 		std::string filePath = root_dir + fileName;
 		std::ifstream fileRead(filePath.c_str(), std::ios::binary);
 		if(fileRead.is_open()){
-			LOG(DEBUG)<<"file available in tftp root directroy";
+			LOG(DEBUG)<<"file available in tftp root directory";
 			fileRead.close();
 			return true;
 		}else{
-			LOG(DEBUG)<<"file not available in tftp root directroy";
+			LOG(DEBUG)<<"file not available in tftp root directory";
 			fileRead.close();
 			return false;
 		}
@@ -52,7 +52,7 @@ bool STARK::isFileAvailable(std::string fileName){
 }
 
 /**
- * @brief Function to check if the giveing file is deletable and if yes then deletes it
+ * @brief Function to check if the passed file is deletable and if yes then deletes it
  * 
  * @param fileName 
  * @return true 

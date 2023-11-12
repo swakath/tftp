@@ -9,7 +9,12 @@
  * MIT License
 */ 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
+#include <fstream>
 #include "tftp_packets.hpp"
+#include "tftp_stark.hpp"
+
+class TFTPTest : public testing::Test {};
 
 class TftpPosErrorPacketTesting : public testing::TestWithParam<std::tuple<TftpErrorCode, const char*>> {
 };
@@ -67,7 +72,7 @@ INSTANTIATE_TEST_SUITE_P(ErrorPackets, TftpPosErrorPacketTesting, testing::Value
 
 
 // Fail
-TEST(TFTP_PACKET_TESTING, ErrorPacket8){
+TEST(TFTP_NEG_ERROR_PACKET_TESTING, ErrorPacket8){
     TftpErrorCode errorCode = TFTP_ERROR_FILE_NOT_FOUND;
 
     uint8_t errorPacket[TFTP_MAX_PACKET_SIZE];
@@ -94,6 +99,7 @@ TEST(TFTP_PACKET_TESTING, ErrorPacket8){
     // NULL_TERMINATION
     expected[indx] = 0x00;
     
+    // function call
     ret = makeErrorPacket(errorPacket, sizeof(errorPacket), errorCode, errMsg);
 
     // Assertions 
@@ -102,7 +108,7 @@ TEST(TFTP_PACKET_TESTING, ErrorPacket8){
 }
 
 // Fail
-TEST(TFTP_PACKET_TESTING, ErrorPacket9){
+TEST(TFTP_NEG_ERROR_PACKET_TESTING, ErrorPacket9){
     TftpErrorCode errorCode = TFTP_ERROR_ACCESS_VIOLATION;
 
     uint8_t errorPacket[TFTP_MAX_PACKET_SIZE];
@@ -131,6 +137,7 @@ TEST(TFTP_PACKET_TESTING, ErrorPacket9){
     // NULL_TERMINATION
     expected[indx] = 0x00;
     
+    // function call
     ret = makeErrorPacket(errorPacket, sizeof(errorPacket), errorCode, errMsg);
     
     // Assertions
@@ -138,8 +145,40 @@ TEST(TFTP_PACKET_TESTING, ErrorPacket9){
     ASSERT_NE(memcmp(expected, errorPacket, ret), 0);
 }
 
+// CommInitPacket - comm. initialize packet
+TEST(TFTP_INIT_PACKET_TESTING, MakeComInitPacketTest) {
+    const size_t bufferLen = 1024;  
+    const char* fileName = "testfile.txt";  
+    const char* mode = "octet";  
+    uint8_t sendBuffer[bufferLen];
+    TftpOpcode opcode = TFTP_OPCODE_RRQ;  
+
+    // function call
+    int result = makeComInitPacket(opcode, sendBuffer, bufferLen, fileName, mode);
+
+    // Assertions
+    EXPECT_GT(result, 0);   
+    EXPECT_LE(result, static_cast<int>(bufferLen)); 
+}
+
+// Data Packet 
+TEST(TFTP_DATA_PACKET_TESTING, MakeDataPacketTest) {
+    const size_t bufferLen = 1024;  
+    const size_t dataLen = 512;     
+    uint8_t sendBuffer[bufferLen];
+    uint8_t data[dataLen] = {};
+    uint16_t blockNum = 42;  //random block number
+
+    // function call
+    int result = makeDataPacket(sendBuffer, bufferLen, blockNum, data, dataLen);
+
+    // Assertions
+    EXPECT_GT(result, 0);   
+    EXPECT_LE(result, static_cast<int>(bufferLen));  
+}
+
 // ACK packet
-TEST(TFTP_PACKET_TESTING, ACKPacket){
+TEST(TFTP_ACK_PACKET_TESTING, ACKPacket){
     TftpOpcode ACK_Code = TFTP_OPCODE_ACK;
 
     uint8_t ackPacket[TFTP_MAX_PACKET_SIZE];
@@ -161,9 +200,62 @@ TEST(TFTP_PACKET_TESTING, ACKPacket){
     expected[indx] = (uint8_t)(networkBlockNum & 0xFF);
     expected[indx+1] = (uint8_t)((networkBlockNum>>8) & 0xFF);
     
+    // function call
     ret = makeACKPacket(ackPacket, sizeof(ackPacket), blockNum);
     
     // Assertions
     ASSERT_GT(ret, 0);
     ASSERT_EQ(memcmp(expected, ackPacket, ret), 0);
+}
+
+
+// =================================================================================================
+
+class MockLogger {
+public:
+    MOCK_METHOD(void, Log, (const std::string&), (const));
+};
+
+
+// File Availability
+TEST(STARKTest, IsFileAvailableTest) {
+    // Mock the logger
+    MockLogger mockLogger;
+
+    // Singleton instance of STARK class exists
+    STARK::getInstance().setRootDir("./testfiles/");
+
+    // Test case 1: File is available
+    std::string availableFileName = "temp1.txt";
+    std::string availableFilePath = STARK::getInstance().root_dir + availableFileName;
+    // std::cout<<availableFilePath<<std::endl;
+    std::ifstream availableFile(availableFilePath.c_str());
+    availableFile.close();
+
+    // Test function
+    ASSERT_TRUE(STARK::getInstance().isFileAvailable(availableFileName));
+
+    // Test case 2: File is not available
+    std::string notAvailableFileName = "temp2.txt";
+    std::remove((STARK::getInstance().root_dir + notAvailableFileName).c_str());
+
+    // Test function
+    ASSERT_FALSE(STARK::getInstance().isFileAvailable(notAvailableFileName));
+
+    // Test case 3: Empty file name
+    std::string emptyFileName = "";
+
+    // Test the function
+    ASSERT_FALSE(STARK::getInstance().isFileAvailable(emptyFileName));
+}
+
+TEST(STARKIsFileDeletableTest, ValidDeletableFile) {
+    STARK::getInstance().setRootDir("./testfiles/");
+    const std::string validFileName = "temp1.txt";
+    TftpErrorCode errorCode;
+
+    bool result = STARK::getInstance().isFileDeletable(validFileName, errorCode);
+
+    // Check if the file is deletable
+    EXPECT_TRUE(result);
 }

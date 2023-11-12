@@ -26,7 +26,7 @@ cmake ..
 The repositry contains the source code for TFTP Server and client as per [RFC1350](https://datatracker.ietf.org/doc/html/rfc1350). The implementating only works in "octet" mode specified in the RFC, "netascii" mode is not supported in the current implementation. Server operates in default TFTP port 69. Due to this, running the server may require root prelivages. 
 
 ### File Delete Operation
-A custom DELETE operation is included appart from the five default operations in the RFC. A client can initialted a DELETE operation to delete a file in the server. DELETE uses an 2 byte opcode of value 06. The DELETE packet format similar to RRQ/WRQ as specified below.
+A custom DELETE operation is included appart from the five default operations in the RFC. A client can initiate a DELETE operation to delete a file in the server. DELETE uses an 2 byte opcode of value 06. The DELETE packet format similar to RRQ/WRQ as specified below.
 
     Opcode   string   1 byte    string   1 byte
     ----------------------------------------------
