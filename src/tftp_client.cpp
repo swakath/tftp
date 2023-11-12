@@ -37,7 +37,8 @@ bool clientManager::commInit(std::string rootDir, std::string fileName, std::str
         this->requestType = requestType;
         this->blockNum = 0;
         this->operationMode = "octet"; // Currently only octet is supported
-        this->compObj.setFilePath(rootDir+fileName);
+        this->compObj.setRootDir(rootDir);
+        this->compObj.setFileName(fileName);
         this->defaultSocket = createRandomUDPSocket(clientIP, &this->portNumber);
         if(this->defaultSocket == -1){
             LOG(FATAL)<<"Error opening client side default socket";
@@ -117,8 +118,17 @@ void clientManager::handleTFTPConnection(){
         }
         std::ifstream fd;
 		TftpErrorCode errorCode;
-		fd = STARK::getInstance().isFileReadable(this->requestFileName, errorCode);
-		if(fd.is_open()){
+		//fd = STARK::getInstance().isFileReadable(this->requestFileName, errorCode);
+		bool compRet;
+        compRet = this->compObj.compressFile();
+        if(!compRet){
+            LOG(ERROR)<<"Error when compressing file";
+            return;
+        }
+        LOG(INFO)<<"Compression success";
+        fd = STARK::getInstance().isFileReadable(this->compObj.compressFileName, errorCode);
+		
+        if(fd.is_open()){
             LOG(INFO)<<"Raw rile open success";
             bool ret;
             ret = handleSendData(fd);
@@ -129,12 +139,20 @@ void clientManager::handleTFTPConnection(){
                 LOG(ERROR)<<"All data not Sent";
 
             }
-            ret = STARK::getInstance().closeReadableFile(this->requestFileName, fd);
+            ret = STARK::getInstance().closeReadableFile(this->compObj.compressFileName, fd);
             if(ret){
 				LOG(INFO)<<"File Close Success";
 			}
 			else{
 				LOG(ERROR)<<"File Close Error";
+			}
+            TftpErrorCode dummy;
+            ret = STARK::getInstance().isFileDeletable(this->compObj.compressFileName, dummy);
+            if(ret){
+				LOG(INFO)<<"Temp files deleted";
+			}
+			else{
+				LOG(ERROR)<<"Temp file deletion error";
 			}
             return;
         }

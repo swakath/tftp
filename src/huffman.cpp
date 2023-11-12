@@ -19,6 +19,8 @@
 Huffman::Huffman(){
     this->textFilePath = "";
     this->compressedFilePath= "";
+    this->textFileName = "";
+    this ->compressFileName= "";
 }
 
 /**
@@ -36,9 +38,19 @@ Huffman::Huffman(std::string filePath){
  * 
  * @param filePath 
  */
-void Huffman::setFilePath(std::string filePath){
-    this->textFilePath = filePath;
-    this->compressedFilePath = filePath + COMPRESSION_EXTENSION;
+void Huffman::setFileName(std::string fileName){
+    this->textFileName = fileName;
+    this->compressFileName = fileName + COMPRESSION_EXTENSION;
+    this->textFilePath = this->root_dir + this->textFileName ;
+    this->compressedFilePath =  this->root_dir + this->compressFileName;
+}
+
+/**
+ * @brief Function to set the directory
+ * 
+ */
+void Huffman::setRootDir(std::string directory){
+    this->root_dir = directory;
 }
 
 /**

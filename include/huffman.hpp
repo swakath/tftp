@@ -37,15 +37,19 @@ class Huffman {
         bool writeHeader(std::ofstream& fd);
         bool readHeader(std::ifstream& fd);
         bool generateTablesFromHeader();
-    public:
         std::string textFilePath;
         std::string compressedFilePath;
+    public:
+        std::string root_dir;
+        std::string textFileName;
+        std::string compressFileName;
         Huffman();
         Huffman(std::string textFilePath);
         // Function generates sorted list of symbols based on the frequencies.
         bool compressFile();
         bool decompressFile();
-        void setFilePath(std::string filePath);
+        void setRootDir(std::string directory);
+        void setFileName(std::string fileName);
 };
 
 bool freqCompare(const std::pair<char,long>& a, const std::pair<char,long>& b);
