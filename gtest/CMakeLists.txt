@@ -28,7 +28,7 @@ add_executable(${PROJECT_NAME}
 
 target_include_directories(${PROJECT_NAME} PRIVATE ${CODE_INCLUED_DIR})
 target_include_directories(${PROJECT_NAME} PRIVATE "${OUTPUT_DIR}")
-target_link_libraries(${PROJECT_NAME} Threads::Threads gmock)
+target_link_libraries(${PROJECT_NAME} Threads::Threads gmock stdc++fs)
 target_compile_definitions(${PROJECT_NAME} PRIVATE ELPP_THREAD_SAFE ELPP_FRESH_LOG_FILE)
 target_link_libraries(${PROJECT_NAME} ${GTEST_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT}) 
 

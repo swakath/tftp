@@ -218,7 +218,7 @@ public:
 
 
 // File Availability
-TEST(STARKTest, IsFileAvailableTest) {
+TEST(STARKFileAvailabilityTest, IsFileAvailableTest) {
     // Mock the logger
     MockLogger mockLogger;
 
@@ -249,7 +249,7 @@ TEST(STARKTest, IsFileAvailableTest) {
     ASSERT_FALSE(STARK::getInstance().isFileAvailable(emptyFileName));
 }
 
-TEST(STARKIsFileDeletableTest, ValidDeletableFile) {
+TEST(STARKFileDeletableTest, ValidDeletableFile) {
     STARK::getInstance().setRootDir("./testfiles/");
     const std::string validFileName = "temp1.txt";
     TftpErrorCode errorCode;
@@ -258,4 +258,26 @@ TEST(STARKIsFileDeletableTest, ValidDeletableFile) {
 
     // Check if the file is deletable
     EXPECT_TRUE(result);
+}
+
+TEST(STARKFileDeletableTest, NotFoundFile) {
+    STARK::getInstance().setRootDir("./testfiles/");
+    const std::string notFoundFileName = "var.txt";
+    TftpErrorCode errorCode;
+
+    bool result = STARK::getInstance().isFileDeletable(notFoundFileName, errorCode);
+
+    // Check if the file is not deletable due to not being found
+    EXPECT_FALSE(result);
+}
+
+TEST(STARKFileDeletableTest, EmptyFileName) {
+    STARK::getInstance().setRootDir("./testfiles/");
+    const std::string emptyFileName = "";
+    TftpErrorCode errorCode;
+
+    bool result = STARK::getInstance().isFileDeletable(emptyFileName, errorCode);
+
+    // Check if the file is not deletable due to an empty file name
+    EXPECT_FALSE(result);
 }
