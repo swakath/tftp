@@ -27,6 +27,11 @@ int main(int argc, char* argv[]){
     std::string requestFileName(argv[2]);
     std::string serverIP(argv[3]);
 
+    const char *homeDir = std::getenv("HOME");   
+    std::string rootArgDir(homeDir);
+    rootArgDir = rootArgDir + "/tftpClient/";
+    std::cout<<"TFTP Directory set to: "<<rootArgDir;
+
     if(tftpMode!=CLIENT_READ && tftpMode!=CLIENT_WRITE && tftpMode!=CLIENT_DELETE){
         std::cout<<"Invalid mode. Usage: <TFTP_OPERATION> = READ|WRITE|DELETE";
         return(EXIT_FAILURE);
@@ -51,7 +56,6 @@ int main(int argc, char* argv[]){
     el::Loggers::reconfigureLogger("default", defaultConf);
 
 	bool ret;
-    std::string rootDir(clientDir);
     TftpOpcode requestType;
 
     if(tftpMode == CLIENT_READ){
@@ -70,8 +74,8 @@ int main(int argc, char* argv[]){
         LOG(ERROR)<<"Invalide tftpMode";
         exit(EXIT_FAILURE);
     }
-    STARK::getInstance().setRootDir(clientDir);
-    ret = clientManager::getInstance().commInit(rootDir,requestFileName, serverIP, requestType);
+    STARK::getInstance().setRootDir(rootArgDir.c_str());
+    ret = clientManager::getInstance().commInit(rootArgDir,requestFileName, serverIP, requestType);
 	
     if(!ret){
         LOG(FATAL) <<"Unable to open socket in default port "<<TFTP_DEFAULT_PORT;
