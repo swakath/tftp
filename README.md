@@ -55,3 +55,6 @@ cmake ..
 ~~~
 
 The test suit is very basic. **Contributions to developing the testsuit and mock sockets will be much appretiated**.
+
+# Contributers
+[Manish Kumar](https://github.com/MKumar-12)
